@@ -177,3 +177,77 @@ function revisarPartidosHoy() {
     const hoy = new Date();
     const clave = (hoy.getMonth() + 1) + "-" + hoy.getDate();
     const contenedor = document.getElementById("hoy");
+    if(contenedor && partidos[clave]) {
+        document.getElementById("estadoVacioHoy").style.display = "none";
+        partidos[clave].forEach(p => {
+            const aviso = document.createElement("div");
+            aviso.classList.add("notificacion-card");
+            aviso.innerHTML = `<div class="noti-icono">⚽</div><div class="noti-texto"><b>Partido hoy</b><br>A las ${p.hora}</div>`;
+            contenedor.appendChild(aviso);
+        });
+    }
+    actualizarNumeroCampana();
+}
+
+function revisarPartidosAnteriores() {
+    const hoy = new Date();
+    const mesAct = hoy.getMonth() + 1;
+    const diaAct = hoy.getDate();
+    const contenedor = document.getElementById("anteriores");
+    if(!contenedor) return;
+    let hayEventos = false;
+
+    Object.keys(partidos).forEach(clave => {
+        const [m, d] = clave.split("-").map(Number);
+        if(m < mesAct || (m === mesAct && d < diaAct)) {
+            partidos[clave].forEach(p => {
+                const aviso = document.createElement("div");
+                aviso.classList.add("notificacion-card");
+                aviso.innerHTML = `<div class="noti-icono">📅</div><div class="noti-texto"><b>${p.local} vs ${p.rival}</b><br>${d}/${m}/26</div>`;
+                contenedor.appendChild(aviso);
+                hayEventos = true;
+            });
+        }
+    });
+    const vacio = document.getElementById("estadoVacioAnteriores");
+    if(vacio) vacio.style.display = hayEventos ? "none" : "flex";
+    actualizarNumeroCampana();
+}
+
+function actualizarNumeroCampana() {
+    const total = document.querySelectorAll(".notificacion-card").length;
+    const badge = document.getElementById("badgeNoti");
+    if(badge) {
+        badge.textContent = total;
+        badge.style.backgroundColor = (total === 0) ? "#00c800" : "red";
+    }
+}
+
+/* ======================================================== */
+/* 5. INICIALIZACIÓN ÚNICA                                  */
+/* ======================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Corregir Calendario
+    if(document.querySelector(".mes")) {
+        document.querySelectorAll(".mes").forEach((mesDiv, index) => {
+            const diasContainer = mesDiv.querySelector(".dias");
+            diasContainer.querySelectorAll(".vacio").forEach(e => e.remove());
+            let offset = new Date(2026, index, 1).getDay() - 1;
+            if (offset < 0) offset = 6;
+            for (let i = 0; i < offset; i++) {
+                const span = document.createElement("span");
+                span.className = "vacio";
+                diasContainer.prepend(span);
+            }
+        });
+    }
+
+    // 2. Cargar datos del CSV
+    cargarPartidos();
+
+    // 3. Listener del Chat
+    const input = document.getElementById("inputUsuario");
+    if(input) input.addEventListener("keypress", (e) => {
+        if(e.key === "Enter") enviarMensaje();
+    });
+});
