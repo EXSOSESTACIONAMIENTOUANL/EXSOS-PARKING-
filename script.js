@@ -1,47 +1,46 @@
 /* ========================= */
-/* CONTROL DE CAJONES (FIREBASE REALTIME) */
+/* MOTOR DE RENDERIZADO ULTRA-FLUIDO */
 /* ========================= */
-const dbRef = firebase.database().ref('/estacionamiento');
 
-// Escuchamos cambios en tiempo real sin intervalos
-dbRef.on('value', (snapshot) => {
-    const datos = snapshot.val();
-    if (!datos) return;
+// 1. Cacheamos los elementos (se buscan una sola vez en la vida)
+const domCajones = Array.from({length: 5}, (_, i) => document.querySelector(`.cajon${i+1}`));
+const numLibres = document.querySelector(".numero-verde");
+const numOcupados = document.querySelector(".numero-rojo");
 
-    // Cacheamos los selectores para mayor velocidad
-    const cajones = [
-        document.querySelector(".cajon1"),
-        document.querySelector(".cajon2"),
-        document.querySelector(".cajon3"),
-        document.querySelector(".cajon4"),
-        document.querySelector(".cajon5")
-    ];
+// 2. Escuchamos el string binario compacto
+firebase.database().ref('/estacionamiento/raw').on('value', (snapshot) => {
+    const raw = snapshot.val(); // Recibe algo como "10110"
+    if (!raw) return;
 
-    let ocupados = 0;
     let libres = 0;
+    let ocupados = 0;
 
-    cajones.forEach((cajon, i) => {
-        if (!cajon) return;
-        const estado = datos[`cajon${i + 1}`];
+    // Procesamiento por micro-tareas
+    for (let i = 0; i < 5; i++) {
+        const estaLibre = raw[i] === "1";
+        const cajon = domCajones[i];
 
-        if (estado == 0) { // Ocupado
-            if (!cajon.classList.contains("ocupado")) {
-                cajon.classList.replace("libre", "ocupado");
-            }
-            ocupados++;
-        } else { // Libre
-            if (!cajon.classList.contains("libre")) {
+        if (!cajon) continue;
+
+        // CAMBIO ATÓMICO: Solo toca el CSS si el estado es diferente
+        if (estaLibre) {
+            if (cajon.classList.contains("ocupado")) {
                 cajon.classList.replace("ocupado", "libre");
             }
             libres++;
+        } else {
+            if (cajon.classList.contains("libre")) {
+                cajon.classList.replace("libre", "ocupado");
+            }
+            ocupados++;
         }
-    });
+    }
 
-    // Actualización de contadores con padding
-    document.querySelector(".numero-verde").innerText = libres.toString().padStart(3, '0');
-    document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3, '0');
-    
-    console.log("⚡ Sincronización instantánea completada");
+    // Actualización de textos (solo si los valores cambiaron)
+    requestAnimationFrame(() => {
+        if(numLibres) numLibres.innerText = libres.toString().padStart(3, '0');
+        if(numOcupados) numOcupados.innerText = ocupados.toString().padStart(3, '0');
+    });
 });
 
 /* ========================= */
