@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-// 🔥 CONFIG FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
     databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -9,13 +8,19 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔥 TIEMPO REAL
-db.ref("/estacionamiento/raw").on("value", (snapshot) => {
+db.ref("/estacionamiento").on("value", (snapshot) => {
 
     let data = snapshot.val();
     if(!data) return;
 
-    let estados = data.split("");
+    // 🔥 USAMOS RAW SI EXISTE
+    let estados = data.raw ? data.raw.split("") : [
+        data.cajon1,
+        data.cajon2,
+        data.cajon3,
+        data.cajon4,
+        data.cajon5
+    ];
 
     let cajones = [
         document.querySelector(".cajon1"),
@@ -30,14 +35,18 @@ db.ref("/estacionamiento/raw").on("value", (snapshot) => {
 
     for(let i=0;i<5;i++){
 
-        if(estados[i] == "0"){
+        if(estados[i] == 0 || estados[i] == "0"){
+
             cajones[i].classList.remove("libre");
             cajones[i].classList.add("ocupado");
             ocupados++;
+
         }else{
+
             cajones[i].classList.remove("ocupado");
             cajones[i].classList.add("libre");
             libres++;
+
         }
 
     }
@@ -46,6 +55,7 @@ db.ref("/estacionamiento/raw").on("value", (snapshot) => {
     document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3,'0');
 
 });
+
 });
 
 function cambiarEstadoCajon(numero, estado){
