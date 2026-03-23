@@ -1,10 +1,10 @@
-/* ========================================== */
-/* 1. CONFIGURACIÓN Y SELECTORES (CACHE)      */
-/* ========================================== */
+/* ======================================================== */
+/* 1. CONFIGURACIÓN Y SELECTORES (OPTIMIZADOS)              */
+/* ======================================================== */
 const dbRef = firebase.database().ref('/estacionamiento/raw');
 let partidos = {}; 
 
-// Guardamos los elementos una sola vez para que sea rápido
+// Cache de elementos para máxima fluidez
 const dom = {
     cajones: Array.from({length: 5}, (_, i) => document.querySelector(`.cajon${i+1}`)),
     numLibres: document.querySelector(".numero-verde"),
@@ -15,15 +15,12 @@ const dom = {
     chat: document.getElementById("chatArea")
 };
 
-/* ========================================== */
-/* 2. MOTOR REAL-TIME (SEÑALES)               */
-/* ========================================== */
+/* ======================================================== */
+/* 2. MOTOR REAL-TIME (LECTURA DE SENSORES)                 */
+/* ======================================================== */
 dbRef.on('value', (snapshot) => {
-    const raw = snapshot.val(); // Recibe "01101" del ESP32
-    if (!raw) {
-        console.warn("Esperando datos de Firebase en /estacionamiento/raw...");
-        return;
-    }
+    const raw = snapshot.val(); // Recibe "11001" del ESP32
+    if (!raw) return;
 
     let libres = 0;
     let ocupados = 0;
@@ -31,7 +28,7 @@ dbRef.on('value', (snapshot) => {
     dom.cajones.forEach((cajon, i) => {
         if (!cajon) return;
         
-        // raw[i] es el caracter '1' (libre) o '0' (ocupado)
+        // El ESP32 manda 1 para Libre y 0 para Ocupado
         const estaLibre = raw[i] === "1";
 
         if (estaLibre) {
@@ -47,16 +44,16 @@ dbRef.on('value', (snapshot) => {
         }
     });
 
-    // Actualizar números suavemente
+    // Sincronizar actualización con el refresco de pantalla
     requestAnimationFrame(() => {
         if(dom.numLibres) dom.numLibres.innerText = libres.toString().padStart(3, '0');
         if(dom.numOcupados) dom.numOcupados.innerText = ocupados.toString().padStart(3, '0');
     });
 });
 
-/* ========================================== */
-/* 3. FUNCIONES DEL MENÚ (LA BARRA)           */
-/* ========================================== */
+/* ======================================================== */
+/* 3. NAVEGACIÓN Y MENÚ (LA BARRA)                          */
+/* ======================================================== */
 function abrirMenu() {
     dom.menu.classList.add("activo");
     dom.overlay.classList.add("activo");
@@ -67,7 +64,6 @@ function cerrarMenu() {
     dom.overlay.classList.remove("activo");
 }
 
-// Para las notificaciones
 function toggleNotificaciones() {
     document.getElementById("panelNotificaciones").classList.toggle("activo");
 }
@@ -77,164 +73,138 @@ function toggleSeccion(id) {
     document.getElementById("flecha-" + id)?.classList.toggle("rotar");
 }
 
-/* ========================================== */
-/* 4. ASISTENTE DINO Y CALENDARIO             */
-/* ========================================== */
-// (Aquí van tus funciones de enviarMensaje, abrirAyuda y cargarPartidos)
-// Asegúrate de NO borrarlas al pegar.
-
-
-function abrirAyuda(){
+/* ======================================================== */
+/* 4. ASISTENTE VIRTUAL (DINO CHAT)                         */
+/* ======================================================== */
+function abrirAyuda() {
     const overlay = document.getElementById("overlayAyuda");
     const titulo = document.getElementById("tituloAyuda");
     const texto = document.getElementById("textoAyuda");
     const mensajeAyuda = document.getElementById("mensajeAyuda");
     const imagenCentral = document.getElementById("imagenCentral");
     const chatContenedor = document.querySelector(".chat-contenedor");
-    const chat = document.getElementById("chatArea");
 
     overlay.classList.add("activo");
-    titulo.innerHTML = ""; texto.innerHTML = ""; chat.innerHTML = "";
+    titulo.innerHTML = ""; texto.innerHTML = ""; dom.chat.innerHTML = "";
     chatContenedor.classList.remove("activo");
-
     imagenCentral.classList.remove("monito-desaparece");
     mensajeAyuda.classList.remove("monito-desaparece");
+    imagenCentral.style.display = "block";
+    mensajeAyuda.style.display = "block";
 
-    escribirTexto("¡Hola!", titulo, 50, () => {
-        escribirTexto("Soy tu asistente virtual EXSOS", texto, 30, () => {
-            setTimeout(()=>{
+    escribirTexto("¡Hola!", titulo, 40, () => {
+        escribirTexto("Soy tu asistente virtual EXSOS", texto, 25, () => {
+            setTimeout(() => {
                 imagenCentral.classList.add("monito-desaparece");
                 mensajeAyuda.classList.add("monito-desaparece");
-                setTimeout(()=>{
-                    imagenCentral.style.display="none";
-                    mensajeAyuda.style.display="none";
+                setTimeout(() => {
+                    imagenCentral.style.display = "none";
+                    mensajeAyuda.style.display = "none";
                     chatContenedor.classList.add("activo");
-                    chat.innerHTML += `
-                    <div class="mensaje bot">
-                        <img src="https://i.postimg.cc/WpxqwBv1/Feliz.png" class="avatar">
-                        <div class="burbuja">¿En qué puedo ayudarte?</div>
-                    </div>`;
-                    chat.scrollTop = chat.scrollHeight;
-                },500);
-            },1500);
+                    dom.chat.innerHTML = `
+                        <div class="mensaje bot">
+                            <img src="https://i.postimg.cc/WpxqwBv1/Feliz.png" class="avatar">
+                            <div class="burbuja">¿En qué puedo ayudarte?</div>
+                        </div>`;
+                }, 500);
+            }, 1200);
         });
     });
 }
 
 function cerrarAyuda(){
-    const overlay = document.getElementById("overlayAyuda");
-    overlay.classList.remove("activo");
+    document.getElementById("overlayAyuda").classList.remove("activo");
 }
 
-function escribirTexto(textoCompleto, elemento, velocidad, callback){
+function enviarMensaje() {
+    const textoUsuario = dom.input.value.trim();
+    if (textoUsuario === "") return;
+
+    dom.chat.innerHTML += `
+        <div class="mensaje usuario">
+            <div class="burbuja">${textoUsuario}</div>
+            <img src="https://i.postimg.cc/3NzGy63L/Dina.png" class="avatar usuario-avatar">
+        </div>`;
+    dom.input.value = "";
+    dom.chat.scrollTop = dom.chat.scrollHeight;
+
+    const pensando = document.createElement("div");
+    pensando.className = "mensaje bot";
+    pensando.innerHTML = `<img src="https://i.postimg.cc/WpxqwBv1/Feliz.png" class="avatar"><div class="burbuja pensando">Escribiendo...</div>`;
+    dom.chat.appendChild(pensando);
+
+    setTimeout(() => {
+        pensando.remove();
+        const respuesta = generarRespuesta(textoUsuario);
+        const mensajeBot = document.createElement("div");
+        mensajeBot.className = "mensaje bot";
+        mensajeBot.innerHTML = `<img src="https://i.postimg.cc/WpxqwBv1/Feliz.png" class="avatar"><div class="burbuja"></div>`;
+        dom.chat.appendChild(mensajeBot);
+        escribirTexto(respuesta, mensajeBot.querySelector(".burbuja"), 20);
+        dom.chat.scrollTop = dom.chat.scrollHeight;
+    }, 800);
+}
+
+function generarRespuesta(texto) {
+    texto = texto.toLowerCase();
+    if (texto.includes("verde")) return "El color verde indica que el lugar está disponible.";
+    if (texto.includes("rojo")) return "El color rojo indica que el cajón está ocupado.";
+    if (texto.includes("tiempo real")) return "Sí, el sistema se actualiza al instante con los sensores.";
+    return "Lo siento, aún estoy aprendiendo. Pregúntame sobre los colores o el tiempo real.";
+}
+
+function escribirTexto(textoCompleto, elemento, velocidad, callback) {
     let i = 0;
     elemento.innerHTML = "";
-    const intervalo = setInterval(()=>{
+    const intervalo = setInterval(() => {
         elemento.innerHTML += textoCompleto.charAt(i);
         i++;
-        if(i >= textoCompleto.length){
+        if (i >= textoCompleto.length) {
             clearInterval(intervalo);
-            if(callback) callback();
+            if (callback) callback();
         }
     }, velocidad);
 }
 
-function enviarMensaje(){
-    const input = document.getElementById("inputUsuario");
-    const chat = document.getElementById("chatArea");
-    const textoUsuario = input.value.trim();
-    if(textoUsuario === "") return;
-
-    chat.innerHTML += `
-    <div class="mensaje usuario">
-        <div class="burbuja">${textoUsuario}</div>
-        <img src="${obtenerAvatarUsuario(textoUsuario)}" class="avatar usuario-avatar">
-    </div>`;
-    input.value="";
-    chat.scrollTop = chat.scrollHeight;
-
-    const pensando = document.createElement("div");
-    pensando.classList.add("mensaje","bot");
-    pensando.innerHTML = `<img src="https://i.postimg.cc/WpxqwBv1/Feliz.png" class="avatar"><div class="burbuja pensando">Escribiendo...</div>`;
-    chat.appendChild(pensando);
-
-    setTimeout(()=>{
-        pensando.remove();
-        const respuesta = generarRespuesta(textoUsuario);
-        const mensajeBot = document.createElement("div");
-        mensajeBot.classList.add("mensaje","bot");
-        mensajeBot.innerHTML = `<img src="${obtenerAvatarBot(textoUsuario)}" class="avatar"><div class="burbuja"></div>`;
-        chat.appendChild(mensajeBot);
-        escribirTexto(respuesta, mensajeBot.querySelector(".burbuja"), 20);
-        chat.scrollTop = chat.scrollHeight;
-    },1000);
-}
-
-// Aquí permanecen tus funciones de obtenerAvatarUsuario, obtenerAvatarBot y generarRespuesta tal cual las tienes...
-function generarRespuesta(texto){
-    texto = texto.toLowerCase();
-    if(texto.includes("verde")) return "El color verde indica que el lugar está disponible.";
-    if(texto.includes("rojo")) return "El color rojo indica que el cajón está ocupado.";
-    if(texto.includes("tu nombre")) return "Mi nombre es Dino, asistente de EXSOS.";
-    if(texto.includes("tiempo real")) return "Sí, el sistema se actualiza automáticamente con sensores.";
-    return "Lo siento, aún estoy aprendiendo. Pregúntame sobre colores o disponibilidad.";
-}
-
-function obtenerAvatarBot(t){ return "https://i.postimg.cc/WpxqwBv1/Feliz.png"; }
-function obtenerAvatarUsuario(t){ return "https://i.postimg.cc/3NzGy63L/Dina.png"; }
-
 /* ======================================================== */
 /* 5. CALENDARIO Y PARTIDOS (LECTURA CSV)                   */
 /* ======================================================== */
+async function cargarPartidos() {
+    try {
+        const respuesta = await fetch("partidos.csv");
+        const texto = await respuesta.text();
+        const lineas = texto.split("\n").slice(1);
 
-let partidos = {};
+        lineas.forEach(linea => {
+            const datos = linea.split(",");
+            if (datos.length < 5) return;
+            const clave = `${datos[0]}-${datos[1]}`;
+            if (!partidos[clave]) partidos[clave] = [];
+            partidos[clave].push({ rival: datos[3], local: datos[2], hora: datos[4] });
+        });
 
-async function cargarPartidos(){
-    const respuesta = await fetch("partidos.csv");
-    const texto = await respuesta.text();
-    const lineas = texto.split("\n");
-    lineas.shift();
-
-    lineas.forEach(linea => {
-        const datos = linea.split(",");
-        if(datos.length < 5) return;
-        const clave = datos[0] + "-" + datos[1]; // Mes-Dia
-        if(!partidos[clave]) partidos[clave] = [];
-        partidos[clave].push({ rival:datos[3], local:datos[2], hora:datos[4], logoLocal:datos[5], logoRival:datos[6] });
-    });
-
-    marcarPartidos();
-    activarClicks();
-    revisarPartidosHoy();
-    revisarPartidosAnteriores();
+        marcarPartidos();
+        revisarPartidosHoy();
+        revisarPartidosAnteriores();
+    } catch (e) { console.error("Error al cargar partidos:", e); }
 }
 
-function marcarPartidos(){
-    const meses = document.querySelectorAll(".mes");
-    meses.forEach((mesDiv, index) => {
+function marcarPartidos() {
+    document.querySelectorAll(".mes").forEach((mesDiv, index) => {
         const mesNumero = index + 1;
         mesDiv.querySelectorAll(".dias span").forEach(dia => {
-            if(partidos[mesNumero + "-" + dia.dataset.dia]) dia.classList.add("partido");
+            const clave = `${mesNumero}-${dia.dataset.dia}`;
+            if (partidos[clave]) {
+                dia.classList.add("partido");
+                dia.onclick = () => mostrarPopup(partidos[clave]);
+            }
         });
     });
 }
 
-function activarClicks(){
-    const meses = document.querySelectorAll(".mes");
-    meses.forEach((mesDiv, index) => {
-        const mesNumero = index + 1;
-        mesDiv.querySelectorAll(".dias span").forEach(dia => {
-            dia.addEventListener("click", function(){
-                const clave = mesNumero + "-" + this.dataset.dia;
-                if(partidos[clave]) mostrarPopup(partidos[clave]);
-            });
-        });
-    });
-}
-
-function mostrarPopup(listaPartidos){
+function mostrarPopup(listaPartidos) {
     const popup = document.getElementById("popup");
-    popup.style.display="flex";
+    popup.style.display = "flex";
     let contenido = "";
     listaPartidos.forEach(p => {
         contenido += `
@@ -251,25 +221,25 @@ function mostrarPopup(listaPartidos){
     document.getElementById("popup-rival").innerHTML = contenido;
 }
 
-function cerrarPopup(){ document.getElementById("popup").style.display="none"; }
+function cerrarPopup() { document.getElementById("popup").style.display = "none"; }
 
-function revisarPartidosHoy(){
+function revisarPartidosHoy() {
     const hoy = new Date();
-    const clave = (hoy.getMonth() + 1) + "-" + hoy.getDate();
+    const clave = `${hoy.getMonth() + 1}-${hoy.getDate()}`;
     const contenedor = document.getElementById("hoy");
-    if(partidos[clave]){
+    if (partidos[clave]) {
         document.getElementById("estadoVacioHoy").style.display = "none";
         partidos[clave].forEach(p => {
             const aviso = document.createElement("div");
-            aviso.classList.add("notificacion-card");
-            aviso.innerHTML = `<div class=\"noti-icono\">⚽</div><div class=\"noti-texto\"><b>Partido hoy</b><br>A las ${p.hora}</div>`;
+            aviso.className = "notificacion-card";
+            aviso.innerHTML = `<div class="noti-icono">⚽</div><div class="noti-texto"><b>Partido hoy</b><br>A las ${p.hora}</div>`;
             contenedor.appendChild(aviso);
         });
     }
     actualizarNumeroCampana();
 }
 
-function revisarPartidosAnteriores(){
+function revisarPartidosAnteriores() {
     const hoy = new Date();
     const mesAct = hoy.getMonth() + 1;
     const diaAct = hoy.getDate();
@@ -278,11 +248,11 @@ function revisarPartidosAnteriores(){
 
     Object.keys(partidos).forEach(clave => {
         const [m, d] = clave.split("-").map(Number);
-        if(m < mesAct || (m === mesAct && d < diaAct)){
+        if (m < mesAct || (m === mesAct && d < diaAct)) {
             partidos[clave].forEach(p => {
                 const aviso = document.createElement("div");
-                aviso.classList.add("notificacion-card");
-                aviso.innerHTML = `<div class=\"noti-icono\">📅</div><div class=\"noti-texto\"><b>${p.local} vs ${p.rival}</b><br>${d}/${m}/26</div>`;
+                aviso.className = "notificacion-card";
+                aviso.innerHTML = `<div class="noti-icono">📅</div><div class="noti-texto"><b>${p.local} vs ${p.rival}</b><br>${d}/${m}/26</div>`;
                 contenedor.appendChild(aviso);
                 hayEventos = true;
             });
@@ -292,33 +262,33 @@ function revisarPartidosAnteriores(){
     actualizarNumeroCampana();
 }
 
-function corregirInicioMeses(){
+function corregirInicioMeses() {
     document.querySelectorAll(".mes").forEach((mesDiv, index) => {
         const diasContainer = mesDiv.querySelector(".dias");
+        if (!diasContainer) return;
         diasContainer.querySelectorAll(".vacio").forEach(e => e.remove());
-        const primerDia = new Date(2026, index, 1).getDay();
-        let offset = primerDia - 1;
-        if(offset < 0) offset = 6;
-        for(let i = 0; i < offset; i++){
+        let offset = new Date(2026, index, 1).getDay() - 1;
+        if (offset < 0) offset = 6;
+        for (let i = 0; i < offset; i++) {
             const espacio = document.createElement("span");
-            espacio.classList.add("vacio");
+            espacio.className = "vacio";
             diasContainer.prepend(espacio);
         }
     });
 }
 
-function actualizarNumeroCampana(){
+function actualizarNumeroCampana() {
     const total = document.querySelectorAll(".notificacion-card").length;
     const badge = document.getElementById("badgeNoti");
-    if(badge){
+    if (badge) {
         badge.textContent = total;
         badge.style.backgroundColor = (total === 0) ? "#00c800" : "red";
     }
 }
 
+// Inicialización final
 document.addEventListener("DOMContentLoaded", () => {
     corregirInicioMeses();
     cargarPartidos();
-    const input = document.getElementById("inputUsuario");
-    if(input) input.addEventListener("keypress", (e) => { if(e.key === "Enter") enviarMensaje(); });
+    dom.input?.addEventListener("keypress", (e) => { if (e.key === "Enter") enviarMensaje(); });
 });
