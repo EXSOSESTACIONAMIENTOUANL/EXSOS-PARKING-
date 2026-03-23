@@ -8,19 +8,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 🔥 ESCUCHA TODA LA RAMA
-db.ref("/estacionamiento").on("value", (snapshot) => {
+let estados = [1,1,1,1,1]; // estado global
 
-    let data = snapshot.val();
-    if(!data) return;
-
-    let estados = [
-        data.cajon1,
-        data.cajon2,
-        data.cajon3,
-        data.cajon4,
-        data.cajon5
-    ];
+function actualizarUI(){
 
     let cajones = [
         document.querySelector(".cajon1"),
@@ -48,16 +38,27 @@ db.ref("/estacionamiento").on("value", (snapshot) => {
             libres++;
 
         }
-
     }
 
     document.querySelector(".numero-verde").innerText = libres.toString().padStart(3,'0');
     document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3,'0');
+}
+
+//  ESCUCHA INDIVIDUAL (ULTRA RAPIDO)
+for(let i=1;i<=5;i++){
+
+    db.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
+
+        if(snapshot.exists()){
+            estados[i-1] = snapshot.val();
+            actualizarUI(); // actualiza instantáneo
+        }
+
+    });
+
+}
 
 });
-
-});
-
 
 function cambiarEstadoCajon(numero, estado){
 
