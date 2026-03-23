@@ -17,18 +17,19 @@ if (typeof firebase !== 'undefined' && document.querySelector(".mapa-estacionami
                 if (cajon.classList.contains("libre")) cajon.classList.replace("libre", "ocupado");
             }
         }
-        // Actualización de contadores
         const libres = (raw.match(/1/g) || []).length;
         const ocupados = (raw.match(/0/g) || []).length;
         requestAnimationFrame(() => {
-            document.querySelector(".numero-verde") && (document.querySelector(".numero-verde").innerText = libres.toString().padStart(3, '0'));
-            document.querySelector(".numero-rojo") && (document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3, '0'));
+            const elV = document.querySelector(".numero-verde");
+            const elR = document.querySelector(".numero-rojo");
+            if(elV) elV.innerText = libres.toString().padStart(3, '0');
+            if(elR) elR.innerText = ocupados.toString().padStart(3, '0');
         });
     });
 }
 
 /* ======================================================== */
-/* 2. NAVEGACIÓN Y MENÚ (UNIVERSAL)                         */
+/* 2. NAVEGACIÓN Y MENÚ                                     */
 /* ======================================================== */
 function abrirMenu() {
     document.getElementById("menuLateral").classList.add("activo");
@@ -88,29 +89,45 @@ function escribirTexto(t, el, v, cb) {
     }, v);
 }
 
-let partidos = {};
-
-async function cargarPartidos(){
-    const respuesta = await fetch("partidos.csv");
-    const texto = await respuesta.text();
-    const lineas = texto.split("\n");
-    lineas.shift();
-
-    lineas.forEach(linea => {
-        const datos = linea.split(",");
-        if(datos.length < 5) return;
-        const clave = datos[0] + "-" + datos[1]; // Mes-Dia
-        if(!partidos[clave]) partidos[clave] = [];
-        partidos[clave].push({ rival:datos[3], local:datos[2], hora:datos[4], logoLocal:datos[5], logoRival:datos[6] });
-    });
-
-    marcarPartidos();
-    activarClicks();
-    revisarPartidosHoy();
-    revisarPartidosAnteriores();
+function enviarMensaje() {
+    const input = document.getElementById("inputUsuario");
+    const chat = document.getElementById("chatArea");
+    if (!input || !input.value.trim()) return;
+    chat.innerHTML += `<div class="mensaje usuario"><div class="burbuja">${input.value}</div><img src="https://i.postimg.cc/3NzGy63L/Dina.png" class="avatar"></div>`;
+    input.value = "";
+    chat.scrollTop = chat.scrollHeight;
 }
 
-function marcarPartidos(){
+/* ======================================================== */
+/* 4. CALENDARIO Y NOTIFICACIONES (CSV)                     */
+/* ======================================================== */
+let partidos = {};
+
+async function cargarPartidos() {
+    try {
+        const respuesta = await fetch("partidos.csv");
+        const texto = await respuesta.text();
+        const lineas = texto.split("\n");
+        lineas.shift();
+
+        partidos = {}; // Resetear objeto
+        lineas.forEach(linea => {
+            const datos = linea.split(",");
+            if(datos.length < 5) return;
+            const clave = datos[0].trim() + "-" + datos[1].trim(); 
+            if(!partidos[clave]) partidos[clave] = [];
+            partidos[clave].push({ rival:datos[3], local:datos[2], hora:datos[4] });
+        });
+
+        // IMPORTANTE: Dibujar todo DESPUÉS de cargar los datos
+        marcarPartidos();
+        activarClicks();
+        revisarPartidosHoy();
+        revisarPartidosAnteriores();
+    } catch (e) { console.error("Error cargando CSV:", e); }
+}
+
+function marcarPartidos() {
     const meses = document.querySelectorAll(".mes");
     meses.forEach((mesDiv, index) => {
         const mesNumero = index + 1;
@@ -120,12 +137,12 @@ function marcarPartidos(){
     });
 }
 
-function activarClicks(){
+function activarClicks() {
     const meses = document.querySelectorAll(".mes");
     meses.forEach((mesDiv, index) => {
         const mesNumero = index + 1;
         mesDiv.querySelectorAll(".dias span").forEach(dia => {
-            dia.addEventListener("click", function(){
+            dia.addEventListener("click", function() {
                 const clave = mesNumero + "-" + this.dataset.dia;
                 if(partidos[clave]) mostrarPopup(partidos[clave]);
             });
@@ -133,9 +150,11 @@ function activarClicks(){
     });
 }
 
-function mostrarPopup(listaPartidos){
+function mostrarPopup(listaPartidos) {
     const popup = document.getElementById("popup");
-    popup.style.display="flex";
+    const rivalArea = document.getElementById("popup-rival");
+    if(!popup) return;
+    popup.style.display = "flex";
     let contenido = "";
     listaPartidos.forEach(p => {
         contenido += `
@@ -149,104 +168,12 @@ function mostrarPopup(listaPartidos){
             <div class="barra-color"></div>
         </div>`;
     });
-    document.getElementById("popup-rival").innerHTML = contenido;
+    rivalArea.innerHTML = contenido;
 }
 
-function cerrarPopup(){ document.getElementById("popup").style.display="none"; }
+function cerrarPopup() { document.getElementById("popup").style.display = "none"; }
 
-function revisarPartidosHoy(){
+function revisarPartidosHoy() {
     const hoy = new Date();
     const clave = (hoy.getMonth() + 1) + "-" + hoy.getDate();
     const contenedor = document.getElementById("hoy");
-    if(partidos[clave]){
-        document.getElementById("estadoVacioHoy").style.display = "none";
-        partidos[clave].forEach(p => {
-            const aviso = document.createElement("div");
-            aviso.classList.add("notificacion-card");
-            aviso.innerHTML = `<div class=\"noti-icono\">⚽</div><div class=\"noti-texto\"><b>Partido hoy</b><br>A las ${p.hora}</div>`;
-            contenedor.appendChild(aviso);
-        });
-    }
-    actualizarNumeroCampana();
-}
-
-function revisarPartidosAnteriores(){
-    const hoy = new Date();
-    const mesAct = hoy.getMonth() + 1;
-    const diaAct = hoy.getDate();
-    const contenedor = document.getElementById("anteriores");
-    let hayEventos = false;
-
-    Object.keys(partidos).forEach(clave => {
-        const [m, d] = clave.split("-").map(Number);
-        if(m < mesAct || (m === mesAct && d < diaAct)){
-            partidos[clave].forEach(p => {
-                const aviso = document.createElement("div");
-                aviso.classList.add("notificacion-card");
-                aviso.innerHTML = `<div class=\"noti-icono\">📅</div><div class=\"noti-texto\"><b>${p.local} vs ${p.rival}</b><br>${d}/${m}/26</div>`;
-                contenedor.appendChild(aviso);
-                hayEventos = true;
-            });
-        }
-    });
-    document.getElementById("estadoVacioAnteriores").style.display = hayEventos ? "none" : "flex";
-    actualizarNumeroCampana();
-}
-
-function corregirInicioMeses(){
-    document.querySelectorAll(".mes").forEach((mesDiv, index) => {
-        const diasContainer = mesDiv.querySelector(".dias");
-        diasContainer.querySelectorAll(".vacio").forEach(e => e.remove());
-        const primerDia = new Date(2026, index, 1).getDay();
-        let offset = primerDia - 1;
-        if(offset < 0) offset = 6;
-        for(let i = 0; i < offset; i++){
-            const espacio = document.createElement("span");
-            espacio.classList.add("vacio");
-            diasContainer.prepend(espacio);
-        }
-    });
-}
-
-function actualizarNumeroCampana(){
-    const total = document.querySelectorAll(".notificacion-card").length;
-    const badge = document.getElementById("badgeNoti");
-    if(badge){
-        badge.textContent = total;
-        badge.style.backgroundColor = (total === 0) ? "#00c800" : "red";
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    corregirInicioMeses();
-    cargarPartidos();
-    const input = document.getElementById("inputUsuario");
-    if(input) input.addEventListener("keypress", (e) => { if(e.key === "Enter") enviarMensaje(); });
-});
-
-
-/* ======================================================== */
-/* 5. INICIALIZACIÓN                                        */
-/* ======================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-    cargarPartidos(); // Carga datos y luego dispara calendario/campana
-    
-    if(document.querySelector(".mes")) {
-        document.querySelectorAll(".mes").forEach((mesDiv, index) => {
-            const container = mesDiv.querySelector(".dias");
-            if (!container) return;
-            container.querySelectorAll(".vacio").forEach(v => v.remove());
-            let offset = new Date(2026, index, 1).getDay() - 1;
-            if (offset < 0) offset = 6;
-            for (let i = 0; i < offset; i++) {
-                const span = document.createElement("span");
-                span.className = "vacio";
-                container.prepend(span);
-            }
-        });
-    }
-    
-    document.getElementById("inputUsuario")?.addEventListener("keypress", (e) => {
-        if(e.key === "Enter") enviarMensaje();
-    });
-});
