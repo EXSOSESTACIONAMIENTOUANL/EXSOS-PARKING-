@@ -1,67 +1,55 @@
-setInterval(function(){
+/* ========================= */
+/* CONTROL DE CAJONES (FIREBASE REALTIME) */
+/* ========================= */
 
-fetch("/datos")
-.then(response => response.text())
-.then(data => {
+// Referencia a tu base de datos
+const dbRef = firebase.database().ref('/estacionamiento');
 
-let estados = data.split(",")
+// Este evento "on('value')" escucha cambios en tiempo real
+dbRef.on('value', (snapshot) => {
+    const datos = snapshot.val();
+    if (!datos) return;
 
-let cajones = [
-document.querySelector(".cajon1"),
-document.querySelector(".cajon2"),
-document.querySelector(".cajon3"),
-document.querySelector(".cajon4"),
-document.querySelector(".cajon5")
-]
+    // Mapeamos los datos que vienen del JSON del ESP32
+    // Convertimos a array para usar tu lógica de ciclo
+    let estados = [
+        datos.cajon1,
+        datos.cajon2,
+        datos.cajon3,
+        datos.cajon4,
+        datos.cajon5
+    ];
 
-let ocupados = 0
-let libres = 0
+    let cajones = [
+        document.querySelector(".cajon1"),
+        document.querySelector(".cajon2"),
+        document.querySelector(".cajon3"),
+        document.querySelector(".cajon4"),
+        document.querySelector(".cajon5")
+    ];
 
-for(let i=0;i<5;i++){
+    let ocupados = 0;
+    let libres = 0;
 
-    if(estados[i] == "0"){ // ocupado
-
-        cajones[i].classList.remove("libre")
-        cajones[i].classList.add("ocupado")
-
-        ocupados++
-
-    }else{ // libre
-
-        cajones[i].classList.remove("ocupado")
-        cajones[i].classList.add("libre")
-
-        libres++
-
+    for (let i = 0; i < 5; i++) {
+        // En Firebase guardamos 0 para ocupado y 1 para libre
+        if (estados[i] == 0) { 
+            cajones[i].classList.remove("libre");
+            cajones[i].classList.add("ocupado");
+            ocupados++;
+        } else {
+            cajones[i].classList.remove("ocupado");
+            cajones[i].classList.add("libre");
+            libres++;
+        }
     }
 
-}
-
-document.querySelector(".numero-verde").innerText = libres.toString().padStart(3,'0')
-document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3,'0')
-
-})
-
-},500)
-
-
-function cambiarEstadoCajon(numero, estado){
-
-const cajon = document.querySelector(".cajon" + numero);
-
-if(estado === "libre"){
-
-cajon.classList.remove("ocupado");
-cajon.classList.add("libre");
-
-}else{
-
-cajon.classList.remove("libre");
-cajon.classList.add("ocupado");
-
-}
-
-}
+    // Actualizar contadores visuales
+    document.querySelector(".numero-verde").innerText = libres.toString().padStart(3, '0');
+    document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3, '0');
+    
+    console.log("Actualización recibida de Firebase");
+});
 
 /* ========================= */
 /* MENU LATERAL */
