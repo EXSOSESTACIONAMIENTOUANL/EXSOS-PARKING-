@@ -52,35 +52,43 @@ void setup() {
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 }
-
 void loop() {
-// Leer sensor
-int valorAnalogico = analogRead(pinPresion);
-int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
 
-// Enviar sensor
-Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
+  int valorAnalogico = analogRead(pinPresion);
+  int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
 
-// Leer pluma
-int estadoPlumaDB = 0;
-if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
-  estadoPlumaDB = fbdo.intData();
-}
+  // Enviar sensor a Firebase
+  Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
 
-//  LÓGICA AUTOMÁTICA
-if (estadoPlumaDB == 1) {
-
-  if (estadoSensor == 1) {
-    // 🚗 Hay carro → abrir
-    Serial.println("ABRIR");
-
-    plumaServo.write(90);
-    delay(800);
-    plumaServo.write(0);
+  // Leer pluma desde Firebase
+  int estadoPlumaDB = 0;
+  if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
+    estadoPlumaDB = fbdo.intData();
   }
 
-  //  SIEMPRE RESETEA (haya o no carro)
-  Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
-}
-  
+  // LÓGICA AUTOMÁTICA
+  if (estadoPlumaDB == 1) {
+
+    if (estadoSensor == 1) {
+      Serial.println("CARRO DETECTADO → ABRIR");
+
+      // SUBE pluma
+      plumaServo.write(90);
+
+      // ESPERAR hasta que el carro se vaya
+      while ((analogRead(pinPresion) > umbralPresion)) {
+        delay(100);
+      }
+
+      Serial.println("CARRO SE FUE → BAJAR");
+
+      // BAJA pluma
+      plumaServo.write(0);
+    }
+
+    // Resetear en Firebase
+    Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
+  }
+
+  delay(200);
 }
