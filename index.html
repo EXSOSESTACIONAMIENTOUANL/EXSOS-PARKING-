@@ -218,19 +218,116 @@ Asistente virtual Exsos
         
         <!-- SCRIPT INTEGRADO: Reemplaza el llamado externo para asegurar la conexión -->
         <script>
-            /* ========================= */
-            /* CONEXIÓN A FIREBASE       */
-            /* ========================= */
-            const firebaseConfig = {
-                databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
-            };
-            
-            // Inicializar Firebase
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
 
+            
+            /* ========================= */
+/* ========================= */
+/* 🔥 FIREBASE 2 BASES       */
+/* ========================= */
+
+// 🔵 BASE CAJONES
+const configCajones = {
+    apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
+    databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+// 🟢 BASE PLUMA
+const configPluma = {
+    apiKey: "AIzaSyDTEJ3mfhPKsC2gsp4VNutoCcZ-4naQNTs",
+    databaseURL: "https://estacionamientouanl-default-rtdb.firebaseio.com"
+};
+
+// 🔥 INICIALIZAR LAS 2
+const appCajones = firebase.initializeApp(configCajones, "cajonesApp");
+const appPluma = firebase.initializeApp(configPluma, "plumaApp");
+
+const dbCajones = appCajones.database();
+const dbPluma = appPluma.database();
+
+/* ========================= */
+/* 🚗 CAJONES (BASE 1)       */
+/* ========================= */
+
+dbCajones.ref('estacionamiento').on('value', (snapshot) => {
+    const data = snapshot.val();
+    
+    if (data) {
+        let estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
+
+        let cajones = [
+            document.querySelector(".cajon1"),
+            document.querySelector(".cajon2"),
+            document.querySelector(".cajon3"),
+            document.querySelector(".cajon4"),
+            document.querySelector(".cajon5")
+        ];
+
+        let ocupados = 0;
+        let libres = 0;
+
+        for (let i = 0; i < 5; i++) {
+            if (cajones[i]) {
+                if (estados[i] == 0) {
+                    cajones[i].classList.remove("libre");
+                    cajones[i].classList.add("ocupado");
+                    ocupados++;
+                } else {
+                    cajones[i].classList.remove("ocupado");
+                    cajones[i].classList.add("libre");
+                    libres++;
+                }
+            }
+        }
+
+        document.querySelector(".numero-verde").innerText = libres.toString().padStart(3,'0');
+        document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3,'0');
+    }
+});
+
+/* ========================= */
+/* 🚧 SENSOR + PLUMA (BASE 2)*/
+/* ========================= */
+
+let estadoSensorActual = 0;
+
+const refSensor = dbPluma.ref("estacionamiento/sensor_presion");
+const refPluma = dbPluma.ref("estacionamiento/pluma");
+
+// 🔥 ESCUCHAR SENSOR
+refSensor.on("value", (snapshot) => {
+    if(snapshot.exists()){
+        estadoSensorActual = snapshot.val();
+    }
+});
+
+// 🔥 BOTÓN
+window.solicitarApertura = function(){
+
+    const alerta = document.getElementById("contenedorAlerta");
+
+    if(estadoSensorActual == 0){
+        alerta.innerHTML = "⚠️ Posiciónese en la entrada";
+        alerta.style.background = "#ff3b3b";
+        alerta.style.display = "block";
+        setTimeout(()=> alerta.style.display="none", 3000);
+        return;
+    }
+
+    if(estadoSensorActual == 1){
+        refPluma.set(1);
+        alerta.innerHTML = "✅ Bienvenido";
+        alerta.style.background = "#00c853";
+        alerta.style.display = "block";
+        setTimeout(()=> alerta.style.display="none", 3000);
+    }
+};
+
+
+
+
+            
             // Escuchar cambios en la ruta "estacionamiento" en TIEMPO REAL
-            db.ref('estacionamiento').on('value', (snapshot) => {
+           dbCajones.ref('estacionamiento').on('value', (snapshot) => {
                 const data = snapshot.val();
                 
                 if (data) {
