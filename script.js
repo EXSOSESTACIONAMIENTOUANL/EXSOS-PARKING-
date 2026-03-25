@@ -16,11 +16,10 @@ const configPluma = {
     databaseURL: "https://estacionamientouanl-default-rtdb.firebaseio.com"
 };
 
-// 🔥 INICIALIZAR LAS DOS APPS
+// 🔥 INICIALIZAR
 const appCajones = firebase.initializeApp(configCajones, "cajonesApp");
 const appPluma = firebase.initializeApp(configPluma, "plumaApp");
 
-// 🔥 REFERENCIAS A BASES
 const dbCajones = appCajones.database();
 const dbPluma = appPluma.database();
 
@@ -55,7 +54,6 @@ function actualizarCajon(i){
 }
 
 function actualizarContador(){
-
     let ocupados = estados.filter(e => e == 0).length;
     let libres = 5 - ocupados;
 
@@ -63,23 +61,17 @@ function actualizarContador(){
     numeroRojo.innerText = ocupados.toString().padStart(3,'0');
 }
 
-// 🔥 ESCUCHA CAJONES (BASE 1)
+// 🔥 ESCUCHA CAJONES
 for(let i=1;i<=5;i++){
-
     dbCajones.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
-
         if(snapshot.exists()){
-
             let nuevo = snapshot.val();
-
             if(estados[i-1] !== nuevo){
                 estados[i-1] = nuevo;
                 actualizarCajon(i-1);
             }
         }
-
     });
-
 }
 
 /* ========================= */
@@ -91,48 +83,57 @@ let estadoSensorActual = 0;
 const refSensor = dbPluma.ref("estacionamiento/sensor_presion");
 const refPluma = dbPluma.ref("estacionamiento/pluma");
 
-// 🔥 ESCUCHAR SENSOR (BASE 2)
 refSensor.on("value", (snapshot) => {
-
     if(snapshot.exists()){
         estadoSensorActual = snapshot.val();
-        console.log("Sensor:", estadoSensorActual);
     }
-
 });
 
-// 🔥 BOTÓN PLUMA
+// 🔥 BOTÓN GLOBAL
 window.solicitarApertura = function(){
 
     const alerta = document.getElementById("contenedorAlerta");
 
     if(estadoSensorActual == 0){
-
         alerta.innerHTML = "⚠️ Posiciónese en la entrada";
         alerta.style.background = "#ff3b3b";
         alerta.style.display = "block";
 
-        setTimeout(()=>{
-            alerta.style.display = "none";
-        }, 3000);
-
+        setTimeout(()=> alerta.style.display="none", 3000);
         return;
     }
 
     if(estadoSensorActual == 1){
-
         refPluma.set(1);
 
         alerta.innerHTML = "✅ Bienvenido";
         alerta.style.background = "#00c853";
         alerta.style.display = "block";
 
-        setTimeout(()=>{
-            alerta.style.display = "none";
-        }, 3000);
+        setTimeout(()=> alerta.style.display="none", 3000);
     }
-
 };
+
+/* ========================= */
+/* ENTER CHAT */
+/* ========================= */
+
+const input = document.getElementById("inputUsuario");
+
+if(input){
+    input.addEventListener("keypress", function(e){
+        if(e.key === "Enter"){
+            enviarMensaje();
+        }
+    });
+}
+
+/* ========================= */
+/* INICIO CALENDARIO */
+/* ========================= */
+
+corregirInicioMeses();
+cargarPartidos();
 
 });
 
