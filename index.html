@@ -282,46 +282,96 @@ dbCajones.ref('estacionamiento').on('value', (snapshot) => {
         document.querySelector(".numero-rojo").innerText = ocupados.toString().padStart(3,'0');
     }
 });
-
 /* ========================= */
-/* 🚧 SENSOR + PLUMA (BASE 2)*/
+/*  SENSORES + PLUMAS      */
 /* ========================= */
 
-let estadoSensorActual = 0;
+// --- Variables de Firebase ---
+const refSensorEntrada = dbPluma.ref("estacionamiento/sensor_presion");
+const refPlumaEntrada = dbPluma.ref("estacionamiento/pluma");
 
-const refSensor = dbPluma.ref("estacionamiento/sensor_presion");
-const refPluma = dbPluma.ref("estacionamiento/pluma");
+const refSensorSalida = dbPluma.ref("estacionamiento/sensor_presion_salida");
+const refPlumaSalida = dbPluma.ref("estacionamiento/pluma_salida");
 
-// 🔥 ESCUCHAR SENSOR
-refSensor.on("value", (snapshot) => {
+// --- Variables de Estado Local ---
+let estadoSensorEntrada = 0;
+let estadoSensorSalida = 0;
+let modoBoton = "entrada"; // Puede ser "entrada" o "salida"
+
+// --- Escuchadores de Firebase ---
+refSensorEntrada.on("value", (snapshot) => {
     if(snapshot.exists()){
-        estadoSensorActual = snapshot.val();
+        estadoSensorEntrada = snapshot.val();
     }
 });
 
-// 🔥 BOTÓN
-// 🔥 BOTÓN
+refSensorSalida.on("value", (snapshot) => {
+    if(snapshot.exists()){
+        estadoSensorSalida = snapshot.val();
+    }
+});
+
+// --- Función Principal del Botón ---
 window.solicitarApertura = function(){
     const alerta = document.getElementById("contenedorAlerta");
+    const boton = document.getElementById("btnAbrirPluma");
 
-    if(estadoSensorActual == 0){
-        alerta.innerHTML = "⚠️ Posiciónate en la entrada";
-        alerta.style.background = "#ff3b3b";
-        alerta.classList.add("visible"); // Usamos classList en lugar de display
-        
-        setTimeout(() => alerta.classList.remove("visible"), 3000);
-        return;
-    }
-
-    if(estadoSensorActual == 1){
-        refPluma.set(1);
-        alerta.innerHTML = "✅ Bienvenido";
-        alerta.style.background = "#00c853";
-        alerta.classList.add("visible"); // Usamos classList en lugar de display
-        
-        setTimeout(() => alerta.classList.remove("visible"), 3000);
+    if (modoBoton === "entrada") {
+        // LÓGICA DE ENTRADA
+        if(estadoSensorEntrada == 0){
+            mostrarAlerta("⚠️ Posiciónate en la entrada", "#ff3b3b"); // Rojo
+        } else if(estadoSensorEntrada == 1){
+            refPlumaEntrada.set(1);
+            mostrarAlerta("✅ Bienvenido", "#00c853"); // Verde
+            
+            // Cambiar a modo salida después de que entre
+            setTimeout(() => {
+                modoBoton = "salida";
+                actualizarEstiloBoton("salida");
+            }, 3000); 
+        }
+    } 
+    else if (modoBoton === "salida") {
+        // LÓGICA DE SALIDA
+        if(estadoSensorSalida == 0){
+            mostrarAlerta("⚠️ Posiciónate en la salida", "#ff3b3b"); // Rojo
+        } else if(estadoSensorSalida == 1){
+            refPlumaSalida.set(1);
+            mostrarAlerta("👋 Excelente día", "#00c853"); // Verde
+            
+            // Regresar a modo entrada después de que salga
+            setTimeout(() => {
+                modoBoton = "entrada";
+                actualizarEstiloBoton("entrada");
+            }, 3000);
+        }
     }
 };
+
+// --- Funciones Auxiliares ---
+function mostrarAlerta(mensaje, color) {
+    const alerta = document.getElementById("contenedorAlerta");
+    alerta.innerHTML = mensaje;
+    alerta.style.background = color;
+    alerta.classList.add("visible");
+    
+    setTimeout(() => {
+        alerta.classList.remove("visible");
+    }, 3000);
+}
+
+function actualizarEstiloBoton(modo) {
+    const boton = document.getElementById("btnAbrirPluma");
+    if (modo === "entrada") {
+        boton.innerHTML = "Abrir Entrada";
+        boton.style.background = "linear-gradient(135deg, #152191 0%, #0c1661 100%)";
+        boton.style.color = "white";
+    } else if (modo === "salida") {
+        boton.innerHTML = "Abrir Salida";
+        boton.style.background = "linear-gradient(135deg, #FFD400 0%, #e5be00 100%)"; 
+        boton.style.color = "#0c1661"; 
+    }
+}
 
 
 
