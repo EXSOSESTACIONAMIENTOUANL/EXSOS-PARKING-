@@ -1,92 +1,112 @@
-document.addEventListener("DOMContentLoaded", function(){
-
+/* ========================= */
+/* 1. CONFIGURACIÓN FIREBASE */
+/* ========================= */
 const firebaseConfig = {
     apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
     databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Inicializar una sola vez
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.database();
 
-// 🔥 GUARDAR ELEMENTOS UNA SOLA VEZ
-const cajones = [
-    document.querySelector(".cajon1"),
-    document.querySelector(".cajon2"),
-    document.querySelector(".cajon3"),
-    document.querySelector(".cajon4"),
-    document.querySelector(".cajon5")
-];
+// Variables globales para los elementos de la interfaz
+let cajones = [];
+let estados = [1, 1, 1, 1, 1];
 
-const numeroVerde = document.querySelector(".numero-verde");
-const numeroRojo = document.querySelector(".numero-rojo");
+/* ========================= */
+/* 2. CONTROL DE ACCESO (PLUMA) */
+/* ========================= */
 
-let estados = [1,1,1,1,1];
+// Escucha el sensor de presión para mensajes y cierre automático
+db.ref("/estacionamiento/sensor_presion").on("value", (snapshot) => {
+    const alertaDiv = document.getElementById("contenedorAlerta");
+    if (!alertaDiv) return;
+    
+    const sensor = snapshot.val();
 
-// 🔥 SOLO ACTUALIZA EL CAJÓN QUE CAMBIA
-function actualizarCajon(i){
-
-    if(estados[i] == 0){
-        cajones[i].classList.remove("libre");
-        cajones[i].classList.add("ocupado");
-    }else{
-        cajones[i].classList.remove("ocupado");
-        cajones[i].classList.add("libre");
+    if (sensor === 1) {
+        alertaDiv.innerHTML = `
+            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 10px 0; font-weight: bold; text-align: center;">
+                ✅ Vehículo detectado. ¡Bienvenido!
+            </div>`;
+    } else {
+        alertaDiv.innerHTML = `
+            <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; margin: 10px 0; font-weight: bold; text-align: center;">
+                ⚠️ Posiciónate en la entrada para acceder.
+            </div>`;
+        // Seguridad: Si el carro se quita del sensor, cerramos la pluma
+        db.ref("/estacionamiento/pluma").set(0);
     }
-
-    actualizarContador();
-}
-
-// 🔥 CONTADOR OPTIMIZADO
-function actualizarContador(){
-
-    let ocupados = estados.filter(e => e == 0).length;
-    let libres = 5 - ocupados;
-
-    numeroVerde.innerText = libres.toString().padStart(3,'0');
-    numeroRojo.innerText = ocupados.toString().padStart(3,'0');
-}
-
-// 🔥 ESCUCHA INDIVIDUAL (ULTRA FLUIDO)
-for(let i=1;i<=5;i++){
-
-    db.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
-
-        if(snapshot.exists()){
-
-            let nuevo = snapshot.val();
-
-            // 🚀 SOLO SI CAMBIA
-            if(estados[i-1] !== nuevo){
-
-                estados[i-1] = nuevo;
-                actualizarCajon(i-1);
-
-            }
-        }
-
-    });
-
-}
-
 });
 
-function cambiarEstadoCajon(numero, estado){
-
-const cajon = document.querySelector(".cajon" + numero);
-
-if(estado === "libre"){
-
-cajon.classList.remove("ocupado");
-cajon.classList.add("libre");
-
-}else{
-
-cajon.classList.remove("libre");
-cajon.classList.add("ocupado");
-
+// Función del botón "Abrir Entrada" (Debe estar afuera para que el HTML la vea)
+function solicitarApertura() {
+    db.ref("/estacionamiento/sensor_presion").once("value").then((snapshot) => {
+        if (snapshot.val() === 1) {
+            db.ref("/estacionamiento/pluma").set(1).then(() => {
+                alert("Abriendo pluma... ¡Pase adelante!");
+            });
+        } else {
+            alert("No se puede abrir: No se detecta vehículo en la entrada.");
+        }
+    }).catch(e => console.error("Error en Firebase:", e));
 }
 
+/* ========================= */
+/* 3. LÓGICA DE LA INTERFAZ  */
+/* ========================= */
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Guardar referencia a los cajones
+    cajones = [
+        document.querySelector(".cajon1"),
+        document.querySelector(".cajon2"),
+        document.querySelector(".cajon3"),
+        document.querySelector(".cajon4"),
+        document.querySelector(".cajon5")
+    ];
+
+    // Escuchar toda la rama para actualizar mapa y contadores
+    db.ref('estacionamiento').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
+
+        estados.forEach((estado, i) => {
+            if (cajones[i]) {
+                if (estado === 0) { // Ocupado
+                    cajones[i].classList.remove("libre");
+                    cajones[i].classList.add("ocupado");
+                } else { // Libre
+                    cajones[i].classList.remove("ocupado");
+                    cajones[i].classList.add("libre");
+                }
+            }
+        });
+        actualizarContador();
+    });
+
+    // Iniciar calendario y notificaciones
+    corregirInicioMeses();
+    cargarPartidos();
+});
+
+// Función para actualizar los números de disponibilidad
+function actualizarContador() {
+    const numeroVerde = document.querySelector(".numero-verde");
+    const numeroRojo = document.querySelector(".numero-rojo");
+    
+    let ocupados = estados.filter(e => e === 0).length;
+    let libres = 5 - ocupados;
+
+    if(numeroVerde) numeroVerde.innerText = libres.toString().padStart(3, '0');
+    if(numeroRojo) numeroRojo.innerText = ocupados.toString().padStart(3, '0');
 }
+
 
 /* ========================= */
 /* MENU LATERAL */
@@ -844,49 +864,5 @@ function solicitarApertura() {
     }).catch(error => console.error("Error en Firebase:", error));
 }
 
-/* ========================= */
-/* MONITOREO DE CAJONES      */
-/* ========================= */
-document.addEventListener("DOMContentLoaded", function() {
-    // Escuchar toda la rama de estacionamiento para actualizar mapa y contadores
-    db.ref('estacionamiento').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
 
-        const estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
-        const cajones = [
-            document.querySelector(".cajon1"),
-            document.querySelector(".cajon2"),
-            document.querySelector(".cajon3"),
-            document.querySelector(".cajon4"),
-            document.querySelector(".cajon5")
-        ];
 
-        let ocupados = 0;
-        let libres = 0;
-
-        estados.forEach((estado, i) => {
-            if (cajones[i]) {
-                if (estado === 0) { // Ocupado
-                    cajones[i].classList.remove("libre");
-                    cajones[i].classList.add("ocupado");
-                    ocupados++;
-                } else { // Libre
-                    cajones[i].classList.remove("ocupado");
-                    cajones[i].classList.add("libre");
-                    libres++;
-                }
-            }
-        });
-
-        // Actualizar contadores visuales
-        const txtLibres = document.querySelector(".numero-verde");
-        const txtOcupados = document.querySelector(".numero-rojo");
-        if(txtLibres) txtLibres.innerText = libres.toString().padStart(3, '0');
-        if(txtOcupados) txtOcupados.innerText = ocupados.toString().padStart(3, '0');
-    });
-
-    // Cargar otras funciones de la interfaz
-    corregirInicioMeses();
-    cargarPartidos();
-});
