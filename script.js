@@ -1,151 +1,99 @@
-
-// Cajones
-
-document.addEventListener("DOMContentLoaded", function(){
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
-    databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// 🔥 GUARDAR ELEMENTOS UNA SOLA VEZ
-const cajones = [
-    document.querySelector(".cajon1"),
-    document.querySelector(".cajon2"),
-    document.querySelector(".cajon3"),
-    document.querySelector(".cajon4"),
-    document.querySelector(".cajon5")
-];
-
-const numeroVerde = document.querySelector(".numero-verde");
-const numeroRojo = document.querySelector(".numero-rojo");
-
-let estados = [1,1,1,1,1];
-
-// 🔥 SOLO ACTUALIZA EL CAJÓN QUE CAMBIA
-function actualizarCajon(i){
-
-    if(estados[i] == 0){
-        cajones[i].classList.remove("libre");
-        cajones[i].classList.add("ocupado");
-    }else{
-        cajones[i].classList.remove("ocupado");
-        cajones[i].classList.add("libre");
-    }
-
-    actualizarContador();
-}
-
-// 🔥 CONTADOR OPTIMIZADO
-function actualizarContador(){
-
-    let ocupados = estados.filter(e => e == 0).length;
-    let libres = 5 - ocupados;
-
-    numeroVerde.innerText = libres.toString().padStart(3,'0');
-    numeroRojo.innerText = ocupados.toString().padStart(3,'0');
-}
-
-// 🔥 ESCUCHA INDIVIDUAL (ULTRA FLUIDO)
-for(let i=1;i<=5;i++){
-
-    db.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
-
-        if(snapshot.exists()){
-
-            let nuevo = snapshot.val();
-
-            // 🚀 SOLO SI CAMBIA
-            if(estados[i-1] !== nuevo){
-
-                estados[i-1] = nuevo;
-                actualizarCajon(i-1);
-
-            }
-        }
-
-    });
-
-}
-
-});
-
-function cambiarEstadoCajon(numero, estado){
-
-const cajon = document.querySelector(".cajon" + numero);
-
-if(estado === "libre"){
-
-cajon.classList.remove("ocupado");
-cajon.classList.add("libre");
-
-}else{
-
-cajon.classList.remove("libre");
-cajon.classList.add("ocupado");
-
-}
-
-}
-
-
-// 1. DECLARACIÓN GLOBAL (Afuera de todo)
+// 1. VARIABLES GLOBALES (Fundamentales para que el botón las vea)
 let db; 
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Configuración de tu Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
         databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
     };
 
-    // Inicializar solo si no se ha hecho
+    // 2. INICIALIZACIÓN ÚNICA
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    
-    db = firebase.database(); // Asignamos a la variable global
+    db = firebase.database(); 
 
-    // ... (aquí va el resto de tu código de los cajones que ya tienes)
+    console.log("🔥 Firebase conectado correctamente");
+
+    // --- LÓGICA DE LOS CAJONES (ESTACIONAMIENTO) ---
+    const cajones = [
+        document.querySelector(".cajon1"),
+        document.querySelector(".cajon2"),
+        document.querySelector(".cajon3"),
+        document.querySelector(".cajon4"),
+        document.querySelector(".cajon5")
+    ];
+
+    const numeroVerde = document.querySelector(".numero-verde");
+    const numeroRojo = document.querySelector(".numero-rojo");
+    let estados = [1, 1, 1, 1, 1];
+
+    function actualizarContador() {
+        let ocupados = estados.filter(e => e == 0).length;
+        let libres = 5 - ocupados;
+        if(numeroVerde) numeroVerde.innerText = libres.toString().padStart(3, '0');
+        if(numeroRojo) numeroRojo.innerText = ocupados.toString().padStart(3, '0');
+    }
+
+    // Escuchar cambios en los cajones
+    for (let i = 1; i <= 5; i++) {
+        db.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
+            if (snapshot.exists()) {
+                let nuevo = snapshot.val();
+                estados[i - 1] = nuevo;
+                
+                if (cajones[i - 1]) {
+                    if (nuevo == 0) { // Ocupado
+                        cajones[i - 1].classList.remove("libre");
+                        cajones[i - 1].classList.add("ocupado");
+                    } else { // Libre
+                        cajones[i - 1].classList.remove("ocupado");
+                        cajones[i - 1].classList.add("libre");
+                    }
+                }
+                actualizarContador();
+            }
+        });
+    }
+
+    // Cargar otras funciones (Calendario, etc.)
+    corregirInicioMeses();
+    cargarPartidos();
 });
 
 /* ========================= */
-/* LÓGICA DEL BOTÓN (FIJADA)  */
+/* LÓGICA DEL BOTÓN ABRIR    */
 /* ========================= */
 async function solicitarApertura() {
-    // Verificamos que la DB esté lista
     if (!db) {
-        console.error("Firebase no ha cargado todavía");
+        mostrarMensajeAcceso("⚠️ Error: Base de datos no conectada.");
         return;
     }
 
     try {
-        const refEstacionamiento = db.ref('estacionamiento');
-        
-        // Obtenemos el valor del sensor
-        const snapshot = await refEstacionamiento.child('sensor_presion').once('value');
+        // Obtenemos el valor de sensor_presion
+        const snapshot = await db.ref('estacionamiento/sensor_presion').once('value');
         const valorSensor = snapshot.val();
 
-        console.log("Valor del sensor detectado:", valorSensor);
+        console.log("Revisando sensor:", valorSensor);
 
         if (valorSensor === 0) {
-            // MOSTRAR ERROR (Rojo)
+            // El carro NO está en la entrada
             mostrarMensajeAcceso("🚫 Posiciónate correctamente en la entrada para abrir.", "#ff3333");
         } else {
-            // ÉXITO: Mandamos 1 a la pluma
-            await refEstacionamiento.child('pluma').set(1);
+            // El carro SÍ está -> Abrimos pluma
+            await db.ref('estacionamiento/pluma').set(1);
             mostrarMensajeAcceso("✅ Acceso autorizado. Abriendo pluma...", "#00c800");
             
             // Auto-cerrar en 5 segundos
             setTimeout(() => {
-                refEstacionamiento.child('pluma').set(0);
+                db.ref('estacionamiento/pluma').set(0);
             }, 5000);
         }
     } catch (error) {
-        console.error("Error en la solicitud:", error);
-        mostrarMensajeAcceso("⚠️ Error de conexión con la base de datos.");
+        console.error("Error:", error);
+        mostrarMensajeAcceso("⚠️ Error de comunicación.");
     }
 }
 
@@ -174,7 +122,23 @@ function mostrarMensajeAcceso(texto, color = "#ff3333") {
 }
 
 
+//Cajones
 
+function cambiarEstadoCajon(numero, estado){
+
+const cajon = document.querySelector(".cajon" + numero);
+
+if(estado === "libre"){
+
+cajon.classList.remove("ocupado");
+cajon.classList.add("libre");
+
+}else{
+
+cajon.classList.remove("libre");
+cajon.classList.add("ocupado");
+
+}
 
 /* ========================= */
 /* MENU LATERAL */
