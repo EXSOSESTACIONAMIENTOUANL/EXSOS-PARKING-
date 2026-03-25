@@ -864,4 +864,42 @@ function cerrarPopupAcceso(){
 
 
 
+function mostrarPopup(listaPartidos){
+    document.getElementById("popup").style.display="flex";
+    let contenido = "";
 
+    listaPartidos.forEach(partido => {
+        contenido += `
+        <div class="partido-card-moderno">
+            <div class="partido-fila">
+                <div class="equipo-logo">
+                    <img src="logos/${partido.logoLocal}" alt="Local">
+                </div>
+                <div class="equipo-nombre">${partido.local}</div>
+                
+                <div class="vs-texto">VS</div>
+                
+                <div class="equipo-nombre">${partido.rival}</div>
+                <div class="equipo-logo">
+                    <img src="logos/${partido.logoRival}" alt="Rival">
+                </div>
+                
+                <div class="separador-vertical"></div>
+                
+                <div class="hora-bloque">
+                    <span class="reloj-icono">🕒</span> ${partido.hora}
+                </div>
+            </div>
+            <div class="barra-amarilla"></div>
+            <div class="barra-azul"></div>
+        </div>
+        `;
+    });
+
+    // Inyectamos el contenido y nos aseguramos de que el botón Cerrar sea el de la imagen
+    document.getElementById("popup-rival").innerHTML = contenido;
+}
+
+function cerrarPopup(){
+    document.getElementById("popup").style.display="none";
+}
