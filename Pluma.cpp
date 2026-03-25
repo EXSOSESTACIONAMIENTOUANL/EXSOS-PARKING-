@@ -8,8 +8,8 @@ const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
 // FIREBASE
-#define FIREBASE_HOST "esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
-#define FIREBASE_AUTH "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg"
+#define FIREBASE_HOST "estacionamientouanl-default-rtdb.firebaseio.com"
+#define FIREBASE_AUTH "AIzaSyDTEJ3mfhPKsC2gsp4VNutoCcZ-4naQNTs"
 
 FirebaseData fbdo;
 FirebaseConfig config;
@@ -21,7 +21,11 @@ const int pinServo = 13;
 
 // SENSOR
 const int pinPresion = 34;
-int umbralPresion = 1500; //  AJUSTA SEGÚN TUS VALORES
+int umbralPresion = 1500;
+
+// CONTROL TIEMPO
+unsigned long tiempoAnterior = 0;
+const int intervalo = 200; // 200 ms = rápido
 
 void setup() {
   Serial.begin(115200);
@@ -44,55 +48,39 @@ void setup() {
   // Firebase
   config.host = FIREBASE_HOST;
   config.signer.tokens.legacy_token = FIREBASE_AUTH;
+
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 }
 
 void loop() {
-  if (Firebase.ready()) {
-    int estadoPlumaDB = 0;
-    if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
-      estadoPlumaDB = fbdo.intData();
-    }
-    delay(5000);
-    //  1. Leer sensor
-    int valorAnalogico = analogRead(pinPresion);
+// Leer sensor
+int valorAnalogico = analogRead(pinPresion);
+int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
 
-    // DEBUG (MUY IMPORTANTE)
-    Serial.print("Valor sensor: ");
-    Serial.println(valorAnalogico);
+// Enviar sensor
+Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
 
-    // 🔹 2. Convertir a estado (AJUSTA SI ESTÁ INVERTIDO)
-    int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
+// Leer pluma
+int estadoPlumaDB = 0;
+if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
+  estadoPlumaDB = fbdo.intData();
+}
 
-    // 🔹 3. Enviar SIEMPRE a Firebase (tiempo real)
-    Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
+//  LÓGICA AUTOMÁTICA
+if (estadoPlumaDB == 1) {
 
+  if (estadoSensor == 1) {
+    // 🚗 Hay carro → abrir
+    Serial.println("ABRIR");
 
-
-
-    // 🔹 5. Lógica principal
-    if (estadoSensor == 1 && estadoPlumaDB == 1) {
-
-
-      // Abrir pluma
-      plumaServo.write(90);
-      delay(1500);
-
-      // Cerrar pluma
-      plumaServo.write(0);
-
-      // Resetear SOLO después de usar
-      Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
-      Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", 0);
-    } 
-    else {
-      // Mantener cerrada
-      plumaServo.write(0);
-      estadoPlumaDB = 0;
-      Firebase.setInt(fbdo, "/estacionamiento/pluma", estadoPlumaDB);
-    }
+    plumaServo.write(90);
+    delay(800);
+    plumaServo.write(0);
   }
 
-  delay(100); // velocidad de actualización
+  //  SIEMPRE RESETEA (haya o no carro)
+  Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
+}
+  
 }
