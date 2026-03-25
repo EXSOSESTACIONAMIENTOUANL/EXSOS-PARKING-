@@ -2,6 +2,48 @@ body{
     margin: 0;
 }
 
+/* Botón "Cerrar" dentro de la alerta */
+.btn-cerrar-alerta {
+    background-color: #FFD400; /* Amarillo UANL */
+    color: #152191;            /* Azul */
+    border: none;
+    padding: 8px 20px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    float: right;              /* Lo posiciona a la derecha */
+    margin-bottom: 10px;
+    font-family: 'Gill Sans', sans-serif;
+}
+
+.btn-cerrar-alerta:hover {
+    background-color: #e5c100;
+}
+
+/* Ajuste de la caja de alerta */
+.alerta-acceso {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: white;        /* Fondo blanco para que resalte el texto */
+    color: #333;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-top: 5px solid #152191;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    width: 300px;
+}
+
+.alerta-acceso.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
 
 /* Contenedor con más espacio */
 .contenedor-boton-acceso {
