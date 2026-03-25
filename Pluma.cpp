@@ -15,35 +15,42 @@ FirebaseData fbdo;
 FirebaseConfig config;
 FirebaseAuth auth;
 
-// ===== SERVOS =====
-Servo servoEntrada;
-Servo servoSalida;
+// ==================== ENTRADA ====================
+// SERVO ENTRADA
+Servo plumaServo;
+const int pinServo = 13;
 
-const int pinServoEntrada = 13;
-const int pinServoSalida = 12; // puedes cambiarlo si quieres
-
-// ===== SENSORES =====
-const int pinSensorEntrada = 34;
-const int pinSensorSalida = 35;
-
+// SENSOR ENTRADA
+const int pinPresion = 34;
 int umbralPresion = 1500;
+
+// ==================== SALIDA ====================
+// SERVO SALIDA
+Servo plumaSalidaServo;
+const int pinServoSalida = 12; // puedes cambiar pin
+
+// SENSOR SALIDA
+const int pinPresionSalida = 35;
+int umbralPresionSalida = 1500;
+
+// CONTROL TIEMPO
+unsigned long tiempoAnterior = 0;
+const int intervalo = 200;
 
 void setup() {
   Serial.begin(115200);
 
-  // Configurar PWM
+  // ==================== ENTRADA ====================
   ESP32PWM::allocateTimer(0);
+  plumaServo.setPeriodHertz(50);
+  plumaServo.attach(pinServo, 500, 2400);
+  plumaServo.write(0);
+
+  // ==================== SALIDA ====================
   ESP32PWM::allocateTimer(1);
-
-  // Servo Entrada
-  servoEntrada.setPeriodHertz(50);
-  servoEntrada.attach(pinServoEntrada, 500, 2400);
-  servoEntrada.write(0);
-
-  // Servo Salida
-  servoSalida.setPeriodHertz(50);
-  servoSalida.attach(pinServoSalida, 500, 2400);
-  servoSalida.write(0);
+  plumaSalidaServo.setPeriodHertz(50);
+  plumaSalidaServo.attach(pinServoSalida, 500, 2400);
+  plumaSalidaServo.write(0);
 
   // WiFi
   WiFi.begin(ssid, password);
@@ -64,64 +71,61 @@ void setup() {
 
 void loop() {
 
-  // ===== LECTURA SENSORES =====
-  int valorEntrada = analogRead(pinSensorEntrada);
-  int estadoEntrada = (valorEntrada > umbralPresion) ? 1 : 0;
+  // ==================== ENTRADA ====================
+  int valorAnalogico = analogRead(pinPresion);
+  int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
 
-  int valorSalida = analogRead(pinSensorSalida);
-  int estadoSalida = (valorSalida > umbralPresion) ? 1 : 0;
+  Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
 
-  // ===== ENVIAR A FIREBASE =====
-  Firebase.setInt(fbdo, "/estacionamiento/sensor_entrada", estadoEntrada);
-  Firebase.setInt(fbdo, "/estacionamiento/sensor_salida", estadoSalida);
-
-  // ===== LEER CONTROL =====
-  int plumaEntradaDB = 0;
-  int plumaSalidaDB = 0;
-
-  if (Firebase.getInt(fbdo, "/estacionamiento/pluma_entrada")) {
-    plumaEntradaDB = fbdo.intData();
+  int estadoPlumaDB = 0;
+  if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
+    estadoPlumaDB = fbdo.intData();
   }
 
-  if (Firebase.getInt(fbdo, "/estacionamiento/pluma_salida")) {
-    plumaSalidaDB = fbdo.intData();
-  }
+  if (estadoPlumaDB == 1) {
 
-  // ===== LÓGICA ENTRADA =====
-  if (plumaEntradaDB == 1) {
+    if (estadoSensor == 1) {
+      Serial.println("ENTRADA → CARRO DETECTADO → ABRIR");
 
-    if (estadoEntrada == 1) {
-      Serial.println("ENTRADA → CARRO DETECTADO");
+      plumaServo.write(90);
 
-      servoEntrada.write(90);
+      while ((analogRead(pinPresion) > umbralPresion)) {
 
-      while (analogRead(pinSensorEntrada) > umbralPresion) {
-        delay(100);
       }
 
-      Serial.println("ENTRADA → CARRO SE FUE");
+      Serial.println("ENTRADA → CARRO SE FUE → BAJAR");
 
-      servoEntrada.write(0);
+      plumaServo.write(0);
     }
 
-    Firebase.setInt(fbdo, "/estacionamiento/pluma_entrada", 0);
+    Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
   }
 
-  // ===== LÓGICA SALIDA =====
-  if (plumaSalidaDB == 1) {
+  // ==================== SALIDA ====================
+  int valorAnalogicoSalida = analogRead(pinPresionSalida);
+  int estadoSensorSalida = (valorAnalogicoSalida > umbralPresionSalida) ? 1 : 0;
 
-    if (estadoSalida == 1) {
-      Serial.println("SALIDA → CARRO DETECTADO");
+  Firebase.setInt(fbdo, "/estacionamiento/sensor_presion_salida", estadoSensorSalida);
 
-      servoSalida.write(90);
+  int estadoPlumaSalidaDB = 0;
+  if (Firebase.getInt(fbdo, "/estacionamiento/pluma_salida")) {
+    estadoPlumaSalidaDB = fbdo.intData();
+  }
 
-      while (analogRead(pinSensorSalida) > umbralPresion) {
-        delay(100);
+  if (estadoPlumaSalidaDB == 1) {
+
+    if (estadoSensorSalida == 1) {
+      Serial.println("SALIDA → CARRO DETECTADO → ABRIR");
+
+      plumaSalidaServo.write(90);
+
+      while ((analogRead(pinPresionSalida) > umbralPresionSalida)) {
+   
       }
 
-      Serial.println("SALIDA → CARRO SE FUE");
+      Serial.println("SALIDA → CARRO SE FUE → BAJAR");
 
-      servoSalida.write(0);
+      plumaSalidaServo.write(0);
     }
 
     Firebase.setInt(fbdo, "/estacionamiento/pluma_salida", 0);
