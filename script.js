@@ -92,25 +92,24 @@ refSensor.on("value", (snapshot) => {
 // 🔥 BOTÓN GLOBAL
 window.solicitarApertura = function(){
 
-    const alerta = document.getElementById("contenedorAlerta");
-
     if(estadoSensorActual == 0){
-        alerta.innerHTML = "⚠️ Posiciónese en la entrada";
-        alerta.style.background = "#ff3b3b";
-        alerta.style.display = "block";
 
-        setTimeout(()=> alerta.style.display="none", 3000);
+        mostrarPopupAcceso(
+            "⚠️ Atención",
+            "Posiciónate en la entrada para continuar"
+        );
+
         return;
     }
 
     if(estadoSensorActual == 1){
+
         refPluma.set(1);
 
-        alerta.innerHTML = "✅ Bienvenido";
-        alerta.style.background = "#00c853";
-        alerta.style.display = "block";
-
-        setTimeout(()=> alerta.style.display="none", 3000);
+        mostrarPopupAcceso(
+            "✅ Bienvenido",
+            "Acceso autorizado. ¡Que tengas un buen día!"
+        );
     }
 };
 
@@ -851,7 +850,17 @@ badge.style.backgroundColor = "red"; // rojo
 }
 
 
+// 🔥 MOSTRAR POPUP
+function mostrarPopupAcceso(titulo, mensaje){
+    document.getElementById("mensajeAccesoTitulo").innerText = titulo;
+    document.getElementById("mensajeAccesoTexto").innerText = mensaje;
+    document.getElementById("popupAcceso").style.display = "flex";
+}
 
+// 🔥 CERRAR POPUP
+function cerrarPopupAcceso(){
+    document.getElementById("popupAcceso").style.display = "none";
+}
 
 
 
