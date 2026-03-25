@@ -5,35 +5,50 @@ body{
 /* ESTILOS DE LA ALERTA (TOAST)              */
 /* ========================================= */
 
+/* ========================================= */
+/* ESTILOS DE LA ALERTA (TAMAÑO MÁXIMO)      */
+/* ========================================= */
 .alerta-acceso {
     position: fixed;
-    top: 30px; /* Un poco más despegada del borde superior */
+    /* Centramos la alerta vertical y horizontalmente */
+    top: 50%; 
     left: 50%;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translate(-50%, -50%) scale(0.9); /* Empezamos un poco más pequeña para la animación */
+    
     background: white;        
     color: white;
     
-    /* --- AQUÍ CRECEMOS LA ALERTA --- */
-    padding: 25px 50px; /* Más espacio interno (arriba/abajo y lados) */
-    font-size: 28px; /* Texto mucho más grande (antes era 18px) */
-    min-width: 350px; /* Evita que se vea apretada si el texto es corto */
-    border-radius: 18px; /* Bordes un poco más redondeados */
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4); /* Sombra más fuerte para que resalte */
-    /* ------------------------------- */
+    /* TAMAÑO AUMENTADO DRASTICAMENTE */
+    padding: 30px 40px; 
+    font-size: 32px; /* Letra enorme */
+    width: 80%; /* Ocupará el 80% del ancho del celular */
+    max-width: 400px; /* Para que no se vea deforme en pantallas grandes */
     
+    border-radius: 20px; 
+    box-shadow: 0 25px 50px rgba(0,0,0,0.6); /* Sombra muy profunda */
     z-index: 10000;
+    
     opacity: 0;
     visibility: hidden;
+    
+    /* Animación de "pop" (crece un poco al aparecer) */
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     font-family: 'Gill Sans', sans-serif;
-    font-weight: bold;
+    font-weight: 900; /* Letra más gordita */
     text-align: center;
+    
+    /* Ajuste para el texto dentro del toast */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* Separación entre el emoji y el texto */
 }
 
 .alerta-acceso.visible {
     opacity: 1;
     visibility: visible;
-    transform: translateX(-50%) translateY(0);
+    /* La alerta vuelve a su tamaño original al aparecer */
+    transform: translate(-50%, -50%) scale(1); 
 }
 
 /* Botón "Cerrar" dentro de la alerta */
