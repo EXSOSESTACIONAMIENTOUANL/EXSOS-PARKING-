@@ -134,11 +134,16 @@ function mostrarMensajeAcceso(texto, color = "#ff3333") {
     
     alerta.innerText = texto;
     alerta.style.backgroundColor = color;
+    alerta.style.fontSize = "1.5rem"; // Texto de alerta grande
+    alerta.style.fontWeight = "bold";
+    alerta.style.textAlign = "center";
+    alerta.style.width = "80%";
+    
     alerta.classList.add("show");
 
     setTimeout(() => {
         alerta.classList.remove("show");
-    }, 3500);
+    }, 4000);
 }
 
 
