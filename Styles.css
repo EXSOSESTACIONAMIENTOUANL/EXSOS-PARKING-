@@ -1383,3 +1383,103 @@ text-align:center;
 margin-top:6%;
 margin-bottom:6%;
 }
+/* ========================================= */
+/* ESTILOS DEL POPUP 
+/* ========================================= */
+
+.popup-contenido {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 95%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.partido-card-moderno {
+    background: #f4f4f4; /* Fondo gris claro de la tarjeta */
+    margin-bottom: 15px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.partido-fila {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 10px;
+}
+
+.equipo-logo img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.equipo-nombre {
+    font-family: 'Gill Sans', sans-serif;
+    font-weight: bold;
+    font-size: 14px;
+    color: #000;
+    flex: 1;
+    text-align: center;
+}
+
+.vs-texto {
+    color: #FFD400; /* Amarillo Tigres */
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 5px;
+}
+
+.separador-vertical {
+    width: 2px;
+    height: 40px;
+    background-color: #FFD400;
+    margin: 0 10px;
+}
+
+.hora-bloque {
+    font-family: 'Gill Sans', sans-serif;
+    font-size: 14px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 60px;
+}
+
+.reloj-icono {
+    color: #888;
+}
+
+/* Barras inferiores de la tarjeta */
+.barra-amarilla {
+    height: 8px;
+    background-color: #FFD400;
+}
+
+.barra-azul {
+    height: 8px;
+    background-color: #0c1661;
+}
+
+/* Botón cerrar amarillo centrado */
+.popup-contenido button {
+    background-color: #FFD400;
+    color: #0c1661;
+    border: none;
+    padding: 8px 30px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+    margin: 15px auto 0 auto;
+    font-family: 'Gill Sans', sans-serif;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.popup-contenido button:hover {
+    background-color: #e5be00;
+}
