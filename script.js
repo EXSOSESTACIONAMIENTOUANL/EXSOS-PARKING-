@@ -51,7 +51,7 @@ cajones.forEach(c => {
 // 🚧 PLUMA (ACCESO)
 // =======================================
 
-db.ref("pluma").on("value", snapshot => {
+db.ref("estacionamiento/pluma").on("value", snapshot => {
     const estado = snapshot.val();
     console.log("Pluma:", estado);
 
@@ -70,7 +70,7 @@ db.ref("pluma").on("value", snapshot => {
 // =======================================
 // 🔘 BOTÓN ABRIR ENTRADA
 // =======================================
-onclick="solicitarApertura()"
+
 function solicitarApertura() {
     console.log("🔘 Botón presionado");
 
