@@ -1,48 +1,48 @@
-/* ========================= */
-/* 1. CONFIGURACIÓN FIREBASE */
-/* ========================= */
+/* ========================================= */
+/* 1. CONFIGURACIÓN ÚNICA DE FIREBASE        */
+/* ========================================= */
 const firebaseConfig = {
     apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
     databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
-// Inicializar una sola vez
+// Inicializar solo si no hay una app activa
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// Variables globales para los elementos de la interfaz
+// Variables globales para la interfaz
 let cajones = [];
 let estados = [1, 1, 1, 1, 1];
 
-/* ========================= */
-/* 2. CONTROL DE ACCESO (PLUMA) */
-/* ========================= */
+/* ========================================= */
+/* 2. CONTROL DE ACCESO (PLUMA Y SENSOR)     */
+/* ========================================= */
 
-// Escucha el sensor de presión para mensajes y cierre automático
+// Monitor en tiempo real para el sensor de presión
 db.ref("/estacionamiento/sensor_presion").on("value", (snapshot) => {
     const alertaDiv = document.getElementById("contenedorAlerta");
     if (!alertaDiv) return;
     
-    const sensor = snapshot.val();
+    const hayCarro = snapshot.val(); // 1 = Detectado, 0 = Vacío
 
-    if (sensor === 1) {
+    if (hayCarro === 1) {
         alertaDiv.innerHTML = `
-            <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; border: 1px solid #c3e6cb; margin: 10px 0; font-weight: bold; text-align: center;">
-                ✅ Vehículo detectado. ¡Bienvenido!
+            <div style="background:#d4edda;color:#155724;padding:15px;border-radius:10px;border:1px solid #c3e6cb;text-align:center;font-weight:bold;">
+                ✅ Vehículo detectado. ¡Bienvenido a EXSOS!
             </div>`;
     } else {
         alertaDiv.innerHTML = `
-            <div style="background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; border: 1px solid #ffeeba; margin: 10px 0; font-weight: bold; text-align: center;">
+            <div style="background:#fff3cd;color:#856404;padding:15px;border-radius:10px;border:1px solid #ffeeba;text-align:center;font-weight:bold;">
                 ⚠️ Posiciónate en la entrada para acceder.
             </div>`;
-        // Seguridad: Si el carro se quita del sensor, cerramos la pluma
+        // Seguridad: Si el carro avanza y deja el sensor, cerramos la pluma
         db.ref("/estacionamiento/pluma").set(0);
     }
 });
 
-// Función del botón "Abrir Entrada" (Debe estar afuera para que el HTML la vea)
+// Función para el botón (FUERA de cualquier listener para que funcione el onclick)
 function solicitarApertura() {
     db.ref("/estacionamiento/sensor_presion").once("value").then((snapshot) => {
         if (snapshot.val() === 1) {
@@ -50,17 +50,17 @@ function solicitarApertura() {
                 alert("Abriendo pluma... ¡Pase adelante!");
             });
         } else {
-            alert("No se puede abrir: No se detecta vehículo en la entrada.");
+            alert("Error: No se detecta vehículo en la entrada.");
         }
-    }).catch(e => console.error("Error en Firebase:", e));
+    }).catch(e => console.error("Error Firebase:", e));
 }
 
-/* ========================= */
-/* 3. LÓGICA DE LA INTERFAZ  */
-/* ========================= */
+/* ========================================= */
+/* 3. LÓGICA DE INICIO (DOM CONTENT LOADED)  */
+/* ========================================= */
 
 document.addEventListener("DOMContentLoaded", function() {
-    // Guardar referencia a los cajones
+    // 1. Guardar referencias a los cajones del mapa
     cajones = [
         document.querySelector(".cajon1"),
         document.querySelector(".cajon2"),
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.querySelector(".cajon5")
     ];
 
-    // Escuchar toda la rama para actualizar mapa y contadores
+    // 2. Escucha global de cajones y contadores
     db.ref('estacionamiento').on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
@@ -90,27 +90,48 @@ document.addEventListener("DOMContentLoaded", function() {
         actualizarContador();
     });
 
-    // Iniciar calendario y notificaciones
-    corregirInicioMeses();
-    cargarPartidos();
+    // 3. Inicializar Calendario y Notificaciones
+    if (typeof corregirInicioMeses === "function") corregirInicioMeses();
+    if (typeof cargarPartidos === "function") cargarPartidos();
+
+    // 4. Listener para el Chat (Enter)
+    const inputChat = document.getElementById("inputUsuario");
+    if(inputChat) {
+        inputChat.addEventListener("keypress", (e) => {
+            if(e.key === "Enter") enviarMensaje();
+        });
+    }
 });
 
-// Función para actualizar los números de disponibilidad
+// Función para actualizar los números verdes/rojos
 function actualizarContador() {
-    const numeroVerde = document.querySelector(".numero-verde");
-    const numeroRojo = document.querySelector(".numero-rojo");
+    const numVerde = document.querySelector(".numero-verde");
+    const numRojo = document.querySelector(".numero-rojo");
     
     let ocupados = estados.filter(e => e === 0).length;
     let libres = 5 - ocupados;
 
-    if(numeroVerde) numeroVerde.innerText = libres.toString().padStart(3, '0');
-    if(numeroRojo) numeroRojo.innerText = ocupados.toString().padStart(3, '0');
+    if(numVerde) numVerde.innerText = libres.toString().padStart(3, '0');
+    if(numRojo) numRojo.innerText = ocupados.toString().padStart(3, '0');
 }
 
+/* ========================================= */
+/* 4. MENÚS Y CHATBOT (NO TOCAR)             */
+/* ========================================= */
 
-/* ========================= */
-/* MENU LATERAL */
-/* ========================= */
+function abrirMenu() {
+    document.getElementById("menuLateral").classList.add("activo");
+    document.getElementById("overlay").classList.add("activo");
+}
+
+function cerrarMenu() {
+    document.getElementById("menuLateral").classList.remove("activo");
+    document.getElementById("overlay").classList.remove("activo");
+}
+
+function toggleNotificaciones() {
+    document.getElementById("panelNotificaciones").classList.toggle("activo");
+
 
 
 function abrirMenu(){
