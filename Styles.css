@@ -2,6 +2,63 @@ body{
     margin: 0;
 }
 
+/* Contenedor para centrar el botón */
+.contenedor-boton-acceso {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
+}
+
+/* Estilo Moderno del Botón */
+.boton-premium {
+    background: linear-gradient(135deg, #152191 0%, #0c1661 100%);
+    color: white;
+    border: none;
+    padding: 18px 35px;
+    font-size: 1.2rem;
+    font-family: 'Gill Sans', sans-serif;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.boton-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.4);
+    background: linear-gradient(135deg, #1d2dbd 0%, #152191 100%);
+}
+
+.boton-premium:active {
+    transform: translateY(1px);
+}
+
+/* Estilo para el mensaje de alerta (Toast) */
+.alerta-acceso {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #ff3333;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    z-index: 10000;
+    opacity: 0;
+    transition: 0.3s;
+    font-family: sans-serif;
+}
+
+.alerta-acceso.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+
 
 /* Contenedor del mapa */
 .mapa-estacionamiento {
