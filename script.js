@@ -1,137 +1,96 @@
-/* ========================================= */
-/* 1. CONFIGURACIÓN ÚNICA DE FIREBASE        */
-/* ========================================= */
+document.addEventListener("DOMContentLoaded", function(){
+
 const firebaseConfig = {
     apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
     databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
-// Inicializar solo si no hay una app activa
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Variables globales para la interfaz
-let cajones = [];
-let estados = [1, 1, 1, 1, 1];
+// 🔥 GUARDAR ELEMENTOS UNA SOLA VEZ
+const cajones = [
+    document.querySelector(".cajon1"),
+    document.querySelector(".cajon2"),
+    document.querySelector(".cajon3"),
+    document.querySelector(".cajon4"),
+    document.querySelector(".cajon5")
+];
 
-/* ========================================= */
-/* 2. CONTROL DE ACCESO (PLUMA Y SENSOR)     */
-/* ========================================= */
+const numeroVerde = document.querySelector(".numero-verde");
+const numeroRojo = document.querySelector(".numero-rojo");
 
-// Monitor en tiempo real para el sensor de presión
-db.ref("/estacionamiento/sensor_presion").on("value", (snapshot) => {
-    const alertaDiv = document.getElementById("contenedorAlerta");
-    if (!alertaDiv) return;
-    
-    const hayCarro = snapshot.val(); // 1 = Detectado, 0 = Vacío
+let estados = [1,1,1,1,1];
 
-    if (hayCarro === 1) {
-        alertaDiv.innerHTML = `
-            <div style="background:#d4edda;color:#155724;padding:15px;border-radius:10px;border:1px solid #c3e6cb;text-align:center;font-weight:bold;">
-                ✅ Vehículo detectado. ¡Bienvenido a EXSOS!
-            </div>`;
-    } else {
-        alertaDiv.innerHTML = `
-            <div style="background:#fff3cd;color:#856404;padding:15px;border-radius:10px;border:1px solid #ffeeba;text-align:center;font-weight:bold;">
-                ⚠️ Posiciónate en la entrada para acceder.
-            </div>`;
-        // Seguridad: Si el carro avanza y deja el sensor, cerramos la pluma
-        db.ref("/estacionamiento/pluma").set(0);
+// 🔥 SOLO ACTUALIZA EL CAJÓN QUE CAMBIA
+function actualizarCajon(i){
+
+    if(estados[i] == 0){
+        cajones[i].classList.remove("libre");
+        cajones[i].classList.add("ocupado");
+    }else{
+        cajones[i].classList.remove("ocupado");
+        cajones[i].classList.add("libre");
     }
-});
 
-// Función para el botón (FUERA de cualquier listener para que funcione el onclick)
-function solicitarApertura() {
-    db.ref("/estacionamiento/sensor_presion").once("value").then((snapshot) => {
-        if (snapshot.val() === 1) {
-            db.ref("/estacionamiento/pluma").set(1).then(() => {
-                alert("Abriendo pluma... ¡Pase adelante!");
-            });
-        } else {
-            alert("Error: No se detecta vehículo en la entrada.");
-        }
-    }).catch(e => console.error("Error Firebase:", e));
+    actualizarContador();
 }
 
-/* ========================================= */
-/* 3. LÓGICA DE INICIO (DOM CONTENT LOADED)  */
-/* ========================================= */
+// 🔥 CONTADOR OPTIMIZADO
+function actualizarContador(){
 
-document.addEventListener("DOMContentLoaded", function() {
-    // 1. Guardar referencias a los cajones del mapa
-    cajones = [
-        document.querySelector(".cajon1"),
-        document.querySelector(".cajon2"),
-        document.querySelector(".cajon3"),
-        document.querySelector(".cajon4"),
-        document.querySelector(".cajon5")
-    ];
-
-    // 2. Escucha global de cajones y contadores
-    db.ref('estacionamiento').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-
-        estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
-
-        estados.forEach((estado, i) => {
-            if (cajones[i]) {
-                if (estado === 0) { // Ocupado
-                    cajones[i].classList.remove("libre");
-                    cajones[i].classList.add("ocupado");
-                } else { // Libre
-                    cajones[i].classList.remove("ocupado");
-                    cajones[i].classList.add("libre");
-                }
-            }
-        });
-        actualizarContador();
-    });
-
-    // 3. Inicializar Calendario y Notificaciones
-    if (typeof corregirInicioMeses === "function") corregirInicioMeses();
-    if (typeof cargarPartidos === "function") cargarPartidos();
-
-    // 4. Listener para el Chat (Enter)
-    const inputChat = document.getElementById("inputUsuario");
-    if(inputChat) {
-        inputChat.addEventListener("keypress", (e) => {
-            if(e.key === "Enter") enviarMensaje();
-        });
-    }
-});
-
-// Función para actualizar los números verdes/rojos
-function actualizarContador() {
-    const numVerde = document.querySelector(".numero-verde");
-    const numRojo = document.querySelector(".numero-rojo");
-    
-    let ocupados = estados.filter(e => e === 0).length;
+    let ocupados = estados.filter(e => e == 0).length;
     let libres = 5 - ocupados;
 
-    if(numVerde) numVerde.innerText = libres.toString().padStart(3, '0');
-    if(numRojo) numRojo.innerText = ocupados.toString().padStart(3, '0');
+    numeroVerde.innerText = libres.toString().padStart(3,'0');
+    numeroRojo.innerText = ocupados.toString().padStart(3,'0');
 }
 
-/* ========================================= */
-/* 4. MENÚS Y CHATBOT (NO TOCAR)             */
-/* ========================================= */
+// 🔥 ESCUCHA INDIVIDUAL (ULTRA FLUIDO)
+for(let i=1;i<=5;i++){
 
-function abrirMenu() {
-    document.getElementById("menuLateral").classList.add("activo");
-    document.getElementById("overlay").classList.add("activo");
+    db.ref("/estacionamiento/cajon" + i).on("value", (snapshot) => {
+
+        if(snapshot.exists()){
+
+            let nuevo = snapshot.val();
+
+            // 🚀 SOLO SI CAMBIA
+            if(estados[i-1] !== nuevo){
+
+                estados[i-1] = nuevo;
+                actualizarCajon(i-1);
+
+            }
+        }
+
+    });
+
 }
 
-function cerrarMenu() {
-    document.getElementById("menuLateral").classList.remove("activo");
-    document.getElementById("overlay").classList.remove("activo");
+});
+
+function cambiarEstadoCajon(numero, estado){
+
+const cajon = document.querySelector(".cajon" + numero);
+
+if(estado === "libre"){
+
+cajon.classList.remove("ocupado");
+cajon.classList.add("libre");
+
+}else{
+
+cajon.classList.remove("libre");
+cajon.classList.add("ocupado");
+
 }
 
-function toggleNotificaciones() {
-    document.getElementById("panelNotificaciones").classList.toggle("activo");
+}
 
+/* ========================= */
+/* MENU LATERAL */
+/* ========================= */
 
 
 function abrirMenu(){
@@ -884,6 +843,5 @@ function solicitarApertura() {
         }
     }).catch(error => console.error("Error en Firebase:", error));
 }
-
 
 
