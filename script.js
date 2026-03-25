@@ -783,13 +783,33 @@ badge.style.backgroundColor = "red"; // rojo
 
 }
 
+
+
+
+
+/* ========================= */
+/* CONEXIÓN A FIREBASE       */
+/* ========================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
+    databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+// Inicializar una sola vez
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
 /* ========================= */
 /* CONTROL DE ACCESO (PLUMA) */
 /* ========================= */
 
-// 1. Escuchar el sensor de presión para mostrar el mensaje
+// 1. Escuchar el sensor de presión en tiempo real
 db.ref("/estacionamiento/sensor_presion").on("value", (snapshot) => {
     const alertaDiv = document.getElementById("contenedorAlerta");
+    if(!alertaDiv) return;
+    
     const sensor = snapshot.val();
 
     if (sensor === 1) {
@@ -804,24 +824,69 @@ db.ref("/estacionamiento/sensor_presion").on("value", (snapshot) => {
                 ⚠️ Posiciónate en la entrada para acceder.
             </div>`;
         alertaDiv.classList.add("visible");
-        // Si el carro se quita, cerramos la pluma por seguridad
+        // Cerrar pluma si el carro se retira
         db.ref("/estacionamiento/pluma").set(0);
     }
 });
 
-// 2. Función para el botón "Abrir Entrada"
+// 2. Función del Botón (Debe estar afuera para que el onclick la encuentre)
 function solicitarApertura() {
     db.ref("/estacionamiento/sensor_presion").once("value").then((snapshot) => {
         const sensorStatus = snapshot.val();
 
         if (sensorStatus === 1) {
-            // Si hay carro (1), abrimos pluma
             db.ref("/estacionamiento/pluma").set(1).then(() => {
                 alert("Abriendo pluma... ¡Bienvenido a la UANL!");
             });
         } else {
-            // Si no hay carro (0), no abre y avisa
             alert("No se detecta vehículo. Favor de posicionarse en la entrada.");
         }
-    });
+    }).catch(error => console.error("Error en Firebase:", error));
 }
+
+/* ========================= */
+/* MONITOREO DE CAJONES      */
+/* ========================= */
+document.addEventListener("DOMContentLoaded", function() {
+    // Escuchar toda la rama de estacionamiento para actualizar mapa y contadores
+    db.ref('estacionamiento').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        const estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
+        const cajones = [
+            document.querySelector(".cajon1"),
+            document.querySelector(".cajon2"),
+            document.querySelector(".cajon3"),
+            document.querySelector(".cajon4"),
+            document.querySelector(".cajon5")
+        ];
+
+        let ocupados = 0;
+        let libres = 0;
+
+        estados.forEach((estado, i) => {
+            if (cajones[i]) {
+                if (estado === 0) { // Ocupado
+                    cajones[i].classList.remove("libre");
+                    cajones[i].classList.add("ocupado");
+                    ocupados++;
+                } else { // Libre
+                    cajones[i].classList.remove("ocupado");
+                    cajones[i].classList.add("libre");
+                    libres++;
+                }
+            }
+        });
+
+        // Actualizar contadores visuales
+        const txtLibres = document.querySelector(".numero-verde");
+        const txtOcupados = document.querySelector(".numero-rojo");
+        if(txtLibres) txtLibres.innerText = libres.toString().padStart(3, '0');
+        if(txtOcupados) txtOcupados.innerText = ocupados.toString().padStart(3, '0');
+    });
+
+    // Cargar otras funciones de la interfaz
+    corregirInicioMeses();
+    cargarPartidos();
+});
