@@ -300,15 +300,16 @@ refSensor.on("value", (snapshot) => {
 });
 
 // 🔥 BOTÓN
+// 🔥 BOTÓN
 window.solicitarApertura = function(){
-
     const alerta = document.getElementById("contenedorAlerta");
 
     if(estadoSensorActual == 0){
-        alerta.innerHTML = "⚠️ Posiciónese en la entrada";
+        alerta.innerHTML = "⚠️ Posiciónate en la entrada";
         alerta.style.background = "#ff3b3b";
-        alerta.style.display = "block";
-        setTimeout(()=> alerta.style.display="none", 3000);
+        alerta.classList.add("visible"); // Usamos classList en lugar de display
+        
+        setTimeout(() => alerta.classList.remove("visible"), 3000);
         return;
     }
 
@@ -316,11 +317,11 @@ window.solicitarApertura = function(){
         refPluma.set(1);
         alerta.innerHTML = "✅ Bienvenido";
         alerta.style.background = "#00c853";
-        alerta.style.display = "block";
-        setTimeout(()=> alerta.style.display="none", 3000);
+        alerta.classList.add("visible"); // Usamos classList en lugar de display
+        
+        setTimeout(() => alerta.classList.remove("visible"), 3000);
     }
 };
-
 
 
 
