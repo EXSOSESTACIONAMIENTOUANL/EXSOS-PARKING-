@@ -1,120 +1,109 @@
-// 1. VARIABLE GLOBAL
-let db; 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-document.addEventListener("DOMContentLoaded", function() {
-    // Configuración Completa
-    const firebaseConfig = {
-        apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
-        databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
-    };
+<script>
+// 🔥 CONFIGURACIÓN CON TUS DATOS
+const firebaseConfig = {
+    apiKey: "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg",
+    databaseURL: "https://esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
 
-    // 2. INICIALIZACIÓN ÚNICA (Evita el error de "app already exists")
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-    db = firebase.database(); 
+// 🚀 INICIALIZAR FIREBASE
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    console.log("🔥 Firebase conectado y listo para el botón");
+console.log("🔥 Conectado a Firebase");
 
-    // --- LÓGICA DE LOS CAJONES ---
-    const cajones = [
-        document.querySelector(".cajon1"),
-        document.querySelector(".cajon2"),
-        document.querySelector(".cajon3"),
-        document.querySelector(".cajon4"),
-        document.querySelector(".cajon5")
-    ];
 
-    const numeroVerde = document.querySelector(".numero-verde");
-    const numeroRojo = document.querySelector(".numero-rojo");
-    let estados = [1, 1, 1, 1, 1];
+// =======================================
+// 🚗 CAJONES (SENSORES)
+// =======================================
 
-    function actualizarContador() {
-        let ocupados = estados.filter(e => e == 0).length;
-        let libres = 5 - ocupados;
-        if(numeroVerde) numeroVerde.innerText = libres.toString().padStart(3, '0');
-        if(numeroRojo) numeroRojo.innerText = ocupados.toString().padStart(3, '0');
-    }
+const cajones = [
+    { path: "cajones/cajon1", clase: ".cajon1" },
+    { path: "cajones/cajon2", clase: ".cajon2" },
+    { path: "cajones/cajon3", clase: ".cajon3" },
+    { path: "cajones/cajon4", clase: ".cajon4" },
+    { path: "cajones/cajon5", clase: ".cajon5" }
+];
 
-    // Escuchar cambios en los cajones (Actualiza el mapa en tiempo real)
-    db.ref("/estacionamiento").on("value", (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            // Actualizamos el array local de estados
-            estados = [data.cajon1, data.cajon2, data.cajon3, data.cajon4, data.cajon5];
-            
-            estados.forEach((valor, i) => {
-                if (cajones[i]) {
-                    if (valor == 0) { // Ocupado
-                        cajones[i].classList.remove("libre");
-                        cajones[i].classList.add("ocupado");
-                    } else { // Libre
-                        cajones[i].classList.remove("ocupado");
-                        cajones[i].classList.add("libre");
-                    }
-                }
-            });
-            actualizarContador();
+cajones.forEach(c => {
+    db.ref(c.path).on("value", snapshot => {
+        const estado = snapshot.val();
+        const el = document.querySelector(c.clase);
+
+        if (!el) return;
+
+        if (estado == 1) {
+            el.classList.remove("libre");
+            el.classList.add("ocupado");
+        } else {
+            el.classList.remove("ocupado");
+            el.classList.add("libre");
         }
-    });
 
-    // Cargar otras funciones de la página
-    if (typeof corregirInicioMeses === 'function') corregirInicioMeses();
-    if (typeof cargarPartidos === 'function') cargarPartidos();
+        console.log(c.path, estado);
+    });
 });
 
-/* ========================= */
-/* LÓGICA DEL BOTÓN ABRIR    */
-/* ========================= */
-async function solicitarApertura() {
-    if (!db) {
-        alert("Base de datos no conectada");
-        return;
+
+// =======================================
+// 🚧 PLUMA (ACCESO)
+// =======================================
+
+db.ref("pluma").on("value", snapshot => {
+    const estado = snapshot.val();
+    console.log("Pluma:", estado);
+
+    const btn = document.querySelector(".btn-acceso");
+
+    if (!btn) return;
+
+    if (estado == 1) {
+        btn.style.background = "green";
+    } else {
+        btn.style.background = "#FFD400";
     }
+});
 
-    try {
-        // Obtenemos el sensor de presión (asegúrate que el nombre sea exacto en Firebase)
-        const snapshot = await db.ref('estacionamiento/sensor_presion').once('value');
-        const valorSensor = snapshot.val();
 
-        console.log("Valor del sensor en DB:", valorSensor);
+// =======================================
+// 🔘 BOTÓN ABRIR ENTRADA
+// =======================================
 
-        if (valorSensor === 0) {
-            // Si el sensor es 0, el carro no está ahí
-            mostrarMensajeAcceso("🚫 Posiciónate correctamente en la entrada para abrir.", "#ff3333");
-        } else {
-            // Si el sensor es diferente de 0, abrimos
-            await db.ref('estacionamiento/pluma').set(1);
-            mostrarMensajeAcceso("✅ Acceso autorizado. Abriendo pluma...", "#00c800");
-            
-            // Cerrar pluma automáticamente después de 5 segundos
-            setTimeout(() => {
-                db.ref('estacionamiento/pluma').set(0);
-            }, 5000);
-        }
-    } catch (error) {
-        console.error("Error al interactuar con Firebase:", error);
-        mostrarMensajeAcceso("⚠️ Error de conexión.");
-    }
+function solicitarApertura() {
+    console.log("🚗 Abriendo pluma...");
+
+    db.ref("pluma").set(1);
+
+    mostrarAlerta("Acceso autorizado", "La pluma se está abriendo");
 }
 
-// Función para mostrar alertas en pantalla
-function mostrarMensajeAcceso(texto, color = "#ff3333") {
-    let alerta = document.querySelector(".alerta-acceso");
-    if (!alerta) {
-        alerta = document.createElement("div");
-        alerta.className = "alerta-acceso";
-        document.body.appendChild(alerta);
-    }
-    
-    alerta.innerText = texto;
-    alerta.style.backgroundColor = color;
-    alerta.classList.add("show");
+
+// =======================================
+// 🔔 ALERTA
+// =======================================
+
+function mostrarAlerta(titulo, mensaje) {
+    const alerta = document.querySelector(".alerta-acceso");
+
+    if (!alerta) return;
+
+    alerta.innerHTML = `
+        <div class="alerta-contenido">
+            <h2>${titulo}</h2>
+            <p>${mensaje}</p>
+        </div>
+    `;
+
+    alerta.classList.add("visible");
 
     setTimeout(() => {
-        alerta.classList.remove("show");
-    }, 4000);
+        alerta.classList.remove("visible");
+    });
 }
+
+
 
 
 //Cajones
