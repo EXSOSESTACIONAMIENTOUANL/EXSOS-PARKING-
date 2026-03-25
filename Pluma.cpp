@@ -1,152 +1,98 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <WebServer.h>
-#include <SPIFFS.h>
+#include <FirebaseESP32.h>
+#include <ESP32Servo.h>
 
-const char* ssid = "Totalplay-5BB1";
-const char* password = "5BB13C41hajvn9Au";
+// WIFI
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
 
-WebServer server(80);
+// FIREBASE
+#define FIREBASE_HOST "esp32-ecdcf-default-rtdb.asia-southeast1.firebasedatabase.app"
+#define FIREBASE_AUTH "AIzaSyBTnfeDaDYQlk3ugUHzc3SXB_b7dMrv3Qg"
 
-// LEDS
-int led1R = 23;
-int led1V = 14;
-int led2R = 4;
-int led2V = 18;
-int led3R = 25;
-int led3V = 33;
-int led4R = 27;
-int led4V = 26;
-int led5R = 19;
-int led5V = 22;
+FirebaseData fbdo;
+FirebaseConfig config;
+FirebaseAuth auth;
 
-// SENSORES
-int sensor1 = 34;
-int sensor2 = 35;
-int sensor3 = 32;
-int sensor4 = 39;
-int sensor5 = 36;
+// SERVO
+Servo plumaServo;
+const int pinServo = 13;
 
-int valor1, valor2, valor3, valor4, valor5;
-int valorP1, valorP2, valorP3, valorP4, valorP5;
+// SENSOR
+const int pinPresion = 34;
+int umbralPresion = 1500; //  AJUSTA SEGÚN TUS VALORES
 
-String enviarEstados()
-{
-  return String(valorP1) + "," +
-         String(valorP2) + "," +
-         String(valorP3) + "," +
-         String(valorP4) + "," +
-         String(valorP5);
-}
-
-void setup()
-{
+void setup() {
   Serial.begin(115200);
 
-  pinMode(led1R, OUTPUT);
-  pinMode(led1V, OUTPUT);
-  pinMode(led2R, OUTPUT);
-  pinMode(led2V, OUTPUT);
-  pinMode(led3R, OUTPUT);
-  pinMode(led3V, OUTPUT);
-  pinMode(led4R, OUTPUT);
-  pinMode(led4V, OUTPUT);
-  pinMode(led5R, OUTPUT);
-  pinMode(led5V, OUTPUT);
+  // Servo
+  ESP32PWM::allocateTimer(0);
+  plumaServo.setPeriodHertz(50);
+  plumaServo.attach(pinServo, 500, 2400);
+  plumaServo.write(0);
 
+  // WiFi
   WiFi.begin(ssid, password);
-
   Serial.print("Conectando WiFi");
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("\nWiFi Conectado");
 
-  Serial.println("");
-  Serial.println("WiFi conectado");
-  Serial.println(WiFi.localIP());
-
-  SPIFFS.begin(true);
-
-  // PAGINA PRINCIPAL
-  server.on("/", []()
-  {
-    File file = SPIFFS.open("/Home.html", "r");
-    server.streamFile(file, "text/html");
-    file.close();
-  });
-
-  // ENVIO DE DATOS
-  server.on("/datos", []()
-  {
-    server.send(200, "text/plain", enviarEstados());
-  });
-
-  // PERMITE USAR JS, CSS, IMAGENES
-  server.serveStatic("/", SPIFFS, "/");
-
-  server.begin();
+  // Firebase
+  config.host = FIREBASE_HOST;
+  config.signer.tokens.legacy_token = FIREBASE_AUTH;
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
 }
 
-void loop()
-{
-  server.handleClient();
+void loop() {
+  if (Firebase.ready()) {
+    int estadoPlumaDB = 0;
+    if (Firebase.getInt(fbdo, "/estacionamiento/pluma")) {
+      estadoPlumaDB = fbdo.intData();
+    }
+    delay(5000);
+    //  1. Leer sensor
+    int valorAnalogico = analogRead(pinPresion);
 
-  valor1 = analogRead(sensor1);
-  valor2 = analogRead(sensor2);
-  valor3 = analogRead(sensor3);
-  valor4 = analogRead(sensor4);
-  valor5 = analogRead(sensor5);
+    // DEBUG (MUY IMPORTANTE)
+    Serial.print("Valor sensor: ");
+    Serial.println(valorAnalogico);
 
-  if(valor1 < 3000){
-    digitalWrite(led1R, HIGH);
-    digitalWrite(led1V, LOW);
-    valorP1 = 0;
-  }else{
-    digitalWrite(led1V, HIGH);
-    digitalWrite(led1R, LOW);
-    valorP1 = 1;
+    // 🔹 2. Convertir a estado (AJUSTA SI ESTÁ INVERTIDO)
+    int estadoSensor = (valorAnalogico > umbralPresion) ? 1 : 0;
+
+    // 🔹 3. Enviar SIEMPRE a Firebase (tiempo real)
+    Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", estadoSensor);
+
+
+
+
+    // 🔹 5. Lógica principal
+    if (estadoSensor == 1 && estadoPlumaDB == 1) {
+
+
+      // Abrir pluma
+      plumaServo.write(90);
+      delay(1500);
+
+      // Cerrar pluma
+      plumaServo.write(0);
+
+      // Resetear SOLO después de usar
+      Firebase.setInt(fbdo, "/estacionamiento/pluma", 0);
+      Firebase.setInt(fbdo, "/estacionamiento/sensor_presion", 0);
+    } 
+    else {
+      // Mantener cerrada
+      plumaServo.write(0);
+      estadoPlumaDB = 0;
+      Firebase.setInt(fbdo, "/estacionamiento/pluma", estadoPlumaDB);
+    }
   }
 
-  if(valor2 < 700){
-    digitalWrite(led2R, HIGH);
-    digitalWrite(led2V, LOW);
-    valorP2 = 0;
-  }else{
-    digitalWrite(led2V, HIGH);
-    digitalWrite(led2R, LOW);
-    valorP2 = 1;
-  }
-
-  if(valor3 < 2000){
-    digitalWrite(led3R, HIGH);
-    digitalWrite(led3V, LOW);
-    valorP3 = 0;
-  }else{
-    digitalWrite(led3V, HIGH);
-    digitalWrite(led3R, LOW);
-    valorP3 = 1;
-  }
-
-  if(valor4 < 2500){
-    digitalWrite(led4R, HIGH);
-    digitalWrite(led4V, LOW);
-    valorP4 = 0;
-  }else{
-    digitalWrite(led4V, HIGH);
-    digitalWrite(led4R, LOW);
-    valorP4 = 1;
-  }
-
-  if(valor5 < 1700){
-    digitalWrite(led5R, HIGH);
-    digitalWrite(led5V, LOW);
-    valorP5 = 0;
-  }else{
-    digitalWrite(led5V, HIGH);
-    digitalWrite(led5R, LOW);
-    valorP5 = 1;
-  }
+  delay(100); // velocidad de actualización
 }
