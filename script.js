@@ -91,28 +91,30 @@ refSensor.on("value", (snapshot) => {
 
 // 🔥 BOTÓN GLOBAL
 window.solicitarApertura = function(){
+    const alerta = document.getElementById("contenedorAlerta");
 
     if(estadoSensorActual == 0){
-
-        mostrarPopupAcceso(
-            "⚠️ Atención",
-            "Posiciónate en la entrada para continuar"
-        );
-
+        alerta.innerHTML = "⚠️ Posiciónate en la entrada";
+        alerta.style.background = "#ff3b3b"; /* Rojo de advertencia */
+        alerta.classList.add("visible");
+        
+        setTimeout(() => {
+            alerta.classList.remove("visible");
+        }, 3000);
         return;
     }
 
     if(estadoSensorActual == 1){
-
         refPluma.set(1);
-
-        mostrarPopupAcceso(
-            "✅ Bienvenido",
-            "Acceso autorizado. ¡Que tengas un buen día!"
-        );
+        alerta.innerHTML = "✅ Bienvenido";
+        alerta.style.background = "#00c853"; /* Verde de éxito */
+        alerta.classList.add("visible");
+        
+        setTimeout(() => {
+            alerta.classList.remove("visible");
+        }, 3000);
     }
 };
-
 /* ========================= */
 /* ENTER CHAT */
 /* ========================= */
