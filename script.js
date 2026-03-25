@@ -68,70 +68,79 @@ db.ref("estacionamiento/pluma").on("value", snapshot => {
 
 
 // =======================================
-// 🔘 BOTÓN ABRIR ENTRADA
+// 🔘 BOTÓN ABRIR ENTRADA (Lógica Corregida)
 // =======================================
 
 function solicitarApertura() {
-    console.log("🔘 Botón presionado");
+    console.log("🔘 Intentando abrir pluma...");
 
+    // Consultamos el sensor de presión una sola vez
     db.ref("estacionamiento/sensor_presion").once("value")
     .then(snapshot => {
-
         const sensor = snapshot.val();
-        console.log("Sensor:", sensor);
+        console.log("Valor del sensor de presión:", sensor);
 
-        //  NO hay carro en la entrada
         if (sensor == 0) {
+            // CASO 0: No hay carro. No enviamos datos a Firebase.
             mostrarAlerta(
-                "Acceso denegado",
-                "Colócate en la entrada del estacionamiento"
+                "Acceso denegado", 
+                "Por favor, colócate en la entrada del estacionamiento para detectar tu vehículo."
             );
-            return;
+        } 
+        else if (sensor == 1) {
+            // CASO 1: Hay carro. Escribimos 1 en la pluma.
+            db.ref("estacionamiento/pluma").set(1);
+
+            mostrarAlerta(
+                "¡Bienvenido!", 
+                "Acceso autorizado. La pluma se está abriendo ahora mismo."
+            );
+
+            // ⏱️ Opcional: Cerrar la pluma automáticamente tras 5 segundos
+            setTimeout(() => {
+                db.ref("estacionamiento/pluma").set(0);
+                console.log("Pluma cerrada automáticamente");
+            }, 5000);
         }
-
-        // SI hay carro → abrir pluma
-        db.ref("estacionamiento/pluma").set(1);
-
-        mostrarAlerta(
-            "Acceso autorizado",
-            "La pluma se está abriendo"
-        );
-
-        // ⏱️ Cerrar automáticamente después de 5 segundos
-        setTimeout(() => {
-            db.ref("estacionamiento/pluma").set(0);
-        }, 5000);
-
     })
     .catch(error => {
-        console.error("Error:", error);
+        console.error("Error al leer Firebase:", error);
     });
 }
 
 // =======================================
-// 🔔 ALERTA
+// 🔔 ALERTA CON BOTÓN CERRAR (Estilo Imagen 2)
 // =======================================
 
 function mostrarAlerta(titulo, mensaje) {
-    const alerta = document.querySelector(".alerta-acceso");
+    // Buscamos el contenedor. Si no existe en tu HTML, lo creamos dinámicamente.
+    let alerta = document.querySelector(".alerta-acceso");
+    
+    if (!alerta) {
+        alerta = document.createElement("div");
+        alerta.className = "alerta-acceso";
+        document.body.appendChild(alerta);
+    }
 
-    if (!alerta) return;
-
+    // Insertamos el contenido con el botón "Cerrar" amarillo
     alerta.innerHTML = `
         <div class="alerta-contenido">
+            <button class="btn-cerrar-alerta" onclick="cerrarAlertaManual()">Cerrar</button>
             <h2>${titulo}</h2>
             <p>${mensaje}</p>
         </div>
     `;
 
     alerta.classList.add("visible");
-
-    setTimeout(() => {
-        alerta.classList.remove("visible");
-    });
 }
 
-
+// Función para el botón amarillo de la alerta
+function cerrarAlertaManual() {
+    const alerta = document.querySelector(".alerta-acceso");
+    if (alerta) {
+        alerta.classList.remove("visible");
+    }
+}
 
 
 //Cajones
