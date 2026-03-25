@@ -3,56 +3,73 @@ body{
 }
 
 
-/* ========== NUEVO BOTÓN PREMIUM DE ACCESO ========== */
-
-/* 1. Contenedor para centrado horizontal perfecto */
-.contenedor-boton-acceso {
-    display: flex;
-    justify-content: center; /* Esto lo centra horizontalmente alineado con la entrada central */
-    width: 100%;
-    margin-top: 20px;  /* Espacio de separación con el mapa */
-    margin-bottom: 30px; /* Espacio de separación con el footer */
+/* Contenedor del mapa */
+.mapa-estacionamiento {
+    position: relative;
 }
 
-/* 2. Diseño del botón: GRANDE, Premium y Temático UANL */
-.boton-premium {
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+/* Zona del botón (encima de la entrada verde) */
+.zona-acceso {
+    position: absolute;
     
-    /* Colores Temáticos UANL/FIME */
-    background-color: #FFD400; /* Amarillo Tigres (fondo) */
-    color: #152191; /* Azul FIME (letras) */
+    /* AJUSTA ESTO PARA COLOCARLO EXACTO */
+    bottom: 20px;   /* lo acerca a la entrada */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Botón moderno tipo acceso */
+.btn-acceso {
+    background: linear-gradient(145deg, #FFD400, #f7b500);
+    color: #152191;
     
-    /* Cambios de TAMAÑO: MUCHO MÁS GRANDE */
-    padding: 22px 50px; /* Aumentamos espacio interno (alto y ancho) */
-    font-size: clamp(24px, 5vw, 30px); /* Letra responsive mucho más grande */
+    border: 2px solid #152191;
+    border-radius: 30px;
     
-    /* Diseño moderno */
-    border: 3px solid #152191; /* Borde azul FIME definido */
-    border-radius: 15px; /* Bordes redondeados modernos, no pastilla */
+    padding: 12px 22px;
+    font-size: 16px;
     font-weight: bold;
-    text-transform: uppercase; /* Texto en mayúsculas para más impacto */
-    letter-spacing: 1px; /* Espaciado entre letras */
+    
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    
     cursor: pointer;
-    
-    /* Sombra premium para dar profundidad */
-    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-    
-    /* Transiciones suaves */
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
 }
 
-/* Efecto al pasar el mouse (hover) */
-.boton-premium:hover {
-    background-color: #f7b500; /* Un amarillo un poco más oscuro */
-    box-shadow: 0 12px 20px rgba(0,0,0,0.4);
-    transform: translateY(-3px); /* Se eleva un poquito */
+/* Hover */
+.btn-acceso:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 18px rgba(0,0,0,0.4);
 }
 
-/* Efecto al darle clic (presionado) */
-.boton-premium:active {
-    transform: translateY(1px); /* Se hunde ligeramente */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+/* Click */
+.btn-acceso:active {
+    transform: scale(0.95);
 }
+
+/* EFECTO PRO: pulso suave */
+.btn-acceso::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    border: 2px solid #FFD400;
+    opacity: 0;
+    animation: pulso 2s infinite;
+}
+
+@keyframes pulso {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+
 
 
 
