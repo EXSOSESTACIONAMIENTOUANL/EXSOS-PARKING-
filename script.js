@@ -70,15 +70,43 @@ db.ref("pluma").on("value", snapshot => {
 // =======================================
 // 🔘 BOTÓN ABRIR ENTRADA
 // =======================================
-
+onclick="solicitarApertura()"
 function solicitarApertura() {
-    console.log("🚗 Abriendo pluma...");
+    console.log("🔘 Botón presionado");
 
-    db.ref("pluma").set(1);
+    db.ref("estacionamiento/sensor_presion").once("value")
+    .then(snapshot => {
 
-    mostrarAlerta("Acceso autorizado", "La pluma se está abriendo");
+        const sensor = snapshot.val();
+        console.log("Sensor:", sensor);
+
+        //  NO hay carro en la entrada
+        if (sensor == 0) {
+            mostrarAlerta(
+                "Acceso denegado",
+                "Colócate en la entrada del estacionamiento"
+            );
+            return;
+        }
+
+        // SI hay carro → abrir pluma
+        db.ref("estacionamiento/pluma").set(1);
+
+        mostrarAlerta(
+            "Acceso autorizado",
+            "La pluma se está abriendo"
+        );
+
+        // ⏱️ Cerrar automáticamente después de 5 segundos
+        setTimeout(() => {
+            db.ref("estacionamiento/pluma").set(0);
+        }, 5000);
+
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
 }
-
 
 // =======================================
 // 🔔 ALERTA
