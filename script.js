@@ -1,31 +1,4 @@
 
-/* ========================= */
-/* LÓGICA DEL BOTÓN (ACTUALIZADA) */
-/* ========================= */
-async function solicitarApertura() {
-    try {
-        // Rutas EXACTAS de tu Firebase basadas en tu screenshot
-        const rutaSensor = 'estacionamiento/sensor_presion'; 
-        const rutaPluma = 'estacionamiento/pluma'; 
-
-        // 1. Leemos el sensor primero
-        const snapshot = await db.ref(rutaSensor).once('value');
-        const valorSensor = snapshot.val();
-
-        if (valorSensor == 0) {
-            // Si el sensor está en 0 (no hay carro detectado), mostramos la alerta
-            alert("Por favor, posiciónate correctamente en la entrada central (línea verde) para abrir la barrera.");
-        } 
-        
-        // 2. En TODOS LOS CASOS, mandamos el "1" a la pluma para intentar abrir
-        await db.ref(rutaPluma).set(1);
-        console.log("Comando de apertura '1' enviado a Firebase.");
-        
-    } catch (error) {
-        console.error("Error al conectar con Firebase:", error);
-    }
-}
-
 // Cajones
 
 document.addEventListener("DOMContentLoaded", function(){
@@ -117,6 +90,36 @@ cajon.classList.add("ocupado");
 }
 
 }
+
+
+/* ========================= */
+/* LÓGICA DEL BOTÓN (ACTUALIZADA) */
+/* ========================= */
+async function solicitarApertura() {
+    try {
+        // Rutas EXACTAS de tu Firebase basadas en tu screenshot
+        const rutaSensor = 'estacionamiento/sensor_presion'; 
+        const rutaPluma = 'estacionamiento/pluma'; 
+
+        // 1. Leemos el sensor primero
+        const snapshot = await db.ref(rutaSensor).once('value');
+        const valorSensor = snapshot.val();
+
+        if (valorSensor == 0) {
+            // Si el sensor está en 0 (no hay carro detectado), mostramos la alerta
+            alert("Por favor, posiciónate correctamente en la entrada central (línea verde) para abrir la barrera.");
+        } 
+        
+        // 2. En TODOS LOS CASOS, mandamos el "1" a la pluma para intentar abrir
+        await db.ref(rutaPluma).set(1);
+        console.log("Comando de apertura '1' enviado a Firebase.");
+        
+    } catch (error) {
+        console.error("Error al conectar con Firebase:", error);
+    }
+}
+
+
 
 /* ========================= */
 /* MENU LATERAL */
