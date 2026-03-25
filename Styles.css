@@ -16,6 +16,33 @@ body{
     width: 70%;
     
 }
+/* ---------- BOTÓN DE ACCESO ---------- */
+.contenedor-boton-acceso {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.btn-acceso {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: clamp(20px, 4vw, 30px);
+    background-color: #ead228; /* Amarillo del tema */
+    color: #152191; /* Azul del tema */
+    border: none;
+    padding: 15px 40px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.btn-acceso:hover {
+    transform: scale(1.05);
+    background-color: #ffd400; /* Un amarillo un poco más brillante al pasar el mouse */
+}
+
 
 /*          Campanita             */
 
