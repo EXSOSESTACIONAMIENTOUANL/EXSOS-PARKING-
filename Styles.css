@@ -64,24 +64,22 @@ body{
 }
 
 /* Estilo para el mensaje de alerta (Toast) */
+/* Asegúrate de tener esto en tu Styles.css */
 .alerta-acceso {
     position: fixed;
-    top: 20px;
+    top: -100px; /* Escondido arriba */
     left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: #ff3333;
+    transform: translateX(-50%);
     color: white;
-    padding: 15px 25px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 15px;
     z-index: 10000;
-    opacity: 0;
-    transition: 0.3s;
-    font-family: sans-serif;
+    transition: all 0.5s ease; /* Animación de caída */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
 .alerta-acceso.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    top: 20px; /* Cae a la vista */
 }
 
 
