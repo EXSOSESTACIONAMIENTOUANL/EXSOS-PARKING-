@@ -1,16 +1,16 @@
 Mes,Dia,Local,Rival,Hora,LogoLocal,LogoRival
-3,7,Tigres,Monterrey,21:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Monterrey.png
-3,12,Tigres Femenil,Santos Laguna Femenil,20:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Santos.png
-3,15,Tigres,Queretaro,17:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Queretaro.png
-3,15,Tigres Femenil,Queretaro Femenil,20:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Queretaro.png
-3,22,Tigres,FC Juarez,19:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Juarez.png
-3,22,Tigres Femenil,CA San Luis Femenil,17:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/San-luis.png
-3,25,Tigres Femenil,America Femenil,19:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/America.png
-4,2,Tigres Femenil,Club Tijuana Femenil,21:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tijuana.png
-4,3,Tigres,Club Tijuana,21:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tijuana.png
-4,5,Tigres Femenil,Guadalajara Femenil,17:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Guadalajara.png
-4,11,Tigres,Guadalajara,16:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Guadalajara.png
-4,17,Tigres,Necaxa,20:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Necaxa.png
-4,22,Tigres,Atlas,18:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Atlas.png
-4,24,Tigres Femenil,Monterrey Femenil,20:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Monterrey-Femenil.png
-4,25,Tigres,Mazatlan FC,16:00,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Tigres.png,https://raw.githubusercontent.com/EXSOS-ESTACIONAMIENTOUANL/EXSOS-PARKING/main/logos/Mazatlan.png
+3,7,Tigres,Monterrey,21:00,Tigres.png,Monterrey.png
+3,12,Tigres Femenil,Santos Laguna Femenil,20:00,Tigres.png,Santos.png
+3,15,Tigres,Queretaro,17:00,Tigres.png,Queretaro.png
+3,15,Tigres Femenil,Queretaro Femenil,20:00,Tigres.png,Queretaro.png
+3,22,Tigres,FC Juarez,19:00,Tigres.png,Juarez.png
+3,22,Tigres Femenil,CA San Luis Femenil,17:00,Tigres.png,San-luis.png
+3,25,Tigres Femenil,America Femenil,19:00,Tigres.png,America.png
+4,2,Tigres Femenil,Club Tijuana Femenil,21:00,Tigres.png,Tijuana.png
+4,3,Tigres,Club Tijuana,21:00,Tigres.png,Tijuana.png
+4,5,Tigres Femenil,Guadalajara Femenil,17:00,Tigres.png,Guadalajara.png
+4,11,Tigres,Guadalajara,16:00,Tigres.png,Guadalajara.png
+4,17,Tigres,Necaxa,20:00,Tigres.png,Necaxa.png
+4,22,Tigres,Atlas,18:00,Tigres.png,Atlas.png
+4,24,Tigres Femenil,Monterrey Femenil,20:00,Tigres.png,Monterrey-Femenil.png
+4,25,Tigres,Mazatlan FC,16:00,Tigres.png,Mazatlan.png
