@@ -1377,3 +1377,50 @@ margin-top:6%;
 margin-bottom:6%;
 }
 
+
+
+/* Alinea el popup hacia arriba */
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Lo manda hacia la parte superior */
+    padding-top: 15vh; /* Empuja el popup un poco hacia abajo desde el techo. Ajusta este número si lo quieres más arriba o abajo */
+    z-index: 9999;
+}
+
+/* Fondo blanco y sombra para la tarjeta del partido */
+.partido-card {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Corte exacto mitad amarillo, mitad azul */
+.barra-color {
+    height: 14px; /* Usar px mantiene el grosor firme en celulares */
+    background: linear-gradient(to bottom, #FFD400 50%, #152191 50%);
+}
+
+/* Estilo exacto para el botón de Cerrar */
+.popup-contenido button {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    font-size: 4vw;
+    font-weight: bold;
+    color: #152191; /* Texto azul */
+    background: #FFD400; /* Fondo amarillo */
+    margin: 20px auto 0 auto;
+    padding: 8px 30px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    display: block;
+}
