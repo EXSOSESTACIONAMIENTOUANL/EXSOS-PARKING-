@@ -335,6 +335,25 @@ animation:campana 0.6s;
     z-index: 3000;
 }
 
+.panel-notificaciones{
+
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: clamp(600px, 90vw, 400px);
+    background: white;
+    color: black;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    padding: 15px;
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: 0.3s ease;
+    z-index: 3000;
+}
+
+
 .panel-notificaciones.activo{
     display: block;
     opacity: 1;
@@ -445,7 +464,7 @@ transform:scale(1.02);
 /* ICONO */
 
 .noti-icono{
-font-size:4vw;
+font-size: clamp(40px, 2vw, 28px);
 width:40px;
 text-align:center;
 }
