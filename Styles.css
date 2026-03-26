@@ -265,12 +265,6 @@ body{
     
 }
 
-
-
-
-
-
-
 /*          Campanita             */
 
 .notificaciones-container{
@@ -328,7 +322,7 @@ animation:campana 0.6s;
     position: absolute;
     top: 60px;
     right: 0;
-    width: clamp(600px, 90vw, 400px);
+    width: 600px;
     background: white;
     color: black;
     border-radius: 12px;
@@ -340,7 +334,6 @@ animation:campana 0.6s;
     transition: 0.3s ease;
     z-index: 3000;
 }
-
 
 .panel-notificaciones.activo{
     display: block;
@@ -452,7 +445,7 @@ transform:scale(1.02);
 /* ICONO */
 
 .noti-icono{
-font-size: clamp(40px, 2vw, 28px);
+font-size:4vw;
 width:40px;
 text-align:center;
 }
@@ -474,6 +467,7 @@ font-size:55%;
 color:#444;
 text-align: justify;
 }
+
 
 /*          Menu despegable              */
 
@@ -1375,50 +1369,4 @@ font-size:180%;
 text-align:center;
 margin-top:6%;
 margin-bottom:6%;
-}
-
-
-
-/* Alinea el popup hacia arriba */
-.popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center; /* Esto lo pone exactamente en el centro */
-    z-index: 9999;
-}
-/* Fondo blanco y sombra para la tarjeta del partido */
-.partido-card {
-    width: 100%;
-    background: #ffffff;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-top: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Corte exacto mitad amarillo, mitad azul */
-.barra-color {
-    height: 14px; /* Usar px mantiene el grosor firme en celulares */
-    background: linear-gradient(to bottom, #FFD400 50%, #152191 50%);
-}
-
-/* Estilo exacto para el botón de Cerrar */
-.popup-contenido button {
-    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    font-size: 4vw;
-    font-weight: bold;
-    color: #152191; /* Texto azul */
-    background: #FFD400; /* Fondo amarillo */
-    margin: 20px auto 0 auto;
-    padding: 8px 30px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    display: block;
 }
