@@ -634,54 +634,6 @@ function activarClicks(){
 
 /* ---------- POPUP ---------- */
 
-function mostrarPopup(listaPartidos){
-
-    document.getElementById("popup").style.display="flex";
-
-    let contenido = "";
-
-    listaPartidos.forEach(partido => {
-
-        contenido += `
-        <div class="partido-card">
-
-            <div class="partido-info">
-
-                <div class="equipo">
-                    <img src="logos/${partido.logoLocal}">
-                    <span class="nombre-equipo">${partido.local}</span>
-                </div>
-
-                <div class="vs">VS</div>
-
-                <div class="equipo">
-                    <span class="nombre-equipo">${partido.rival}</span>
-                    <img src="logos/${partido.logoRival}">
-                </div>
-
-                <div class="info-partido">
-                    <div class="hora">🕒 ${partido.hora}</div>
-                </div>
-
-            </div>
-
-            <div class="barra-color"></div>
-
-        </div>
-        `;
-
-    });
-
-    document.getElementById("popup-rival").innerHTML = contenido;
-
-}
-
-function cerrarPopup(){
-
-    document.getElementById("popup").style.display="none";
-
-}
-
 /* ---------- INICIAR ---------- */
 
 document.addEventListener("DOMContentLoaded",function(){
@@ -904,4 +856,39 @@ function mostrarPopup(listaPartidos){
 
 function cerrarPopup(){
     document.getElementById("popup").style.display="none";
+}
+
+// Ejemplo de cómo inyectar las tarjetas desde JS
+function abrirPopupPartido(equipo1, logo1, equipo2, logo2, hora) {
+    const contenedor = document.getElementById('contenedor-partidos');
+    
+    // Limpiamos lo que haya antes
+    contenedor.innerHTML = ''; 
+
+    // Creamos la tarjeta con los datos que le pasemos a la función
+    const tarjetaHTML = `
+        <div class="partido-card">
+            <div class="partido-info">
+                <div class="equipo">
+                    <img src="${logo1}" alt="${equipo1}">
+                    <span class="nombre-equipo">${equipo1}</span>
+                </div>
+                <span class="vs">VS</span>
+                <div class="equipo">
+                    <span class="nombre-equipo">${equipo2}</span>
+                    <img src="${logo2}" alt="${equipo2}">
+                </div>
+                <div class="info-partido">
+                    <span class="hora">🕒 ${hora}</span>
+                </div>
+            </div>
+            <div class="barra-color"></div>
+        </div>
+    `;
+
+    // Metemos la tarjeta al HTML
+    contenedor.innerHTML += tarjetaHTML;
+
+    // Mostramos el popup
+    document.getElementById('popup').style.display = 'flex';
 }
